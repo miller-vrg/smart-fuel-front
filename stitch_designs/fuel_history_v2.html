@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#525464",
+              "error": "#a83836",
+              "on-primary": "#e5fff2",
+              "outline": "#797b78",
+              "surface": "#faf9f6",
+              "inverse-surface": "#0d0f0d",
+              "on-error-container": "#6e0a12",
+              "surface-tint": "#006c53",
+              "on-secondary-container": "#3c5180",
+              "on-primary-fixed": "#004936",
+              "on-primary-container": "#005d47",
+              "error-container": "#fa746f",
+              "on-primary-fixed-variant": "#00684f",
+              "surface-container-highest": "#e1e3de",
+              "surface-container-high": "#e7e9e4",
+              "surface-container-low": "#f4f4f0",
+              "primary-fixed-dim": "#81e7c3",
+              "on-secondary-fixed": "#283e6c",
+              "tertiary-dim": "#505262",
+              "surface-bright": "#faf9f6",
+              "secondary": "#495e8e",
+              "on-surface-variant": "#5d605c",
+              "surface-dim": "#d9dbd6",
+              "secondary-dim": "#3d5282",
+              "primary": "#006c53",
+              "on-error": "#fff7f6",
+              "on-tertiary": "#faf8ff",
+              "on-tertiary-fixed": "#404251",
+              "on-surface": "#303330",
+              "tertiary-container": "#e6e6fa",
+              "surface-container": "#eeeeea",
+              "surface-variant": "#e1e3de",
+              "background": "#faf9f6",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed-dim": "#d8d8ec",
+              "secondary-fixed-dim": "#c4d4ff",
+              "tertiary": "#5c5e6e",
+              "primary-fixed": "#8ff6d0",
+              "primary-dim": "#005f48",
+              "on-secondary": "#f9f8ff",
+              "on-background": "#303330",
+              "secondary-container": "#d9e2ff",
+              "outline-variant": "#b0b3ae",
+              "surface-container-lowest": "#ffffff",
+              "error-dim": "#67040d",
+              "tertiary-fixed": "#e6e6fa",
+              "secondary-fixed": "#d9e2ff",
+              "inverse-primary": "#98ffd9",
+              "on-tertiary-fixed-variant": "#5c5e6e",
+              "on-secondary-fixed-variant": "#465b8b",
+              "primary-container": "#8ff6d0"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#faf9f6]/70 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface cursor-pointer" data-icon="menu">menu</span>
+<h1 class="text-xl font-bold text-[#006c53] tracking-tight font-headline">Serene Drive</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Close up of a professional male user avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoDXuY83u248bmuZCM4nl4pioP4DYf8fwKJhxhKEf29nV8zXaQe2_iw2FKJSDsMrm_ugXWAE6qYuwZNAwy5e-_SbWB4ZjVZCliMziwD27-QeVEY0PH4hhP30maXB6Z6fGsHqLr58eWa1X9iwaQAGdwpz5sUR1xdw-AnGoocsQ-rVVJzKlgMPSNiD8EkExbGr8uEi5dErb35Ouk1ci-qjtNKcPPPdGFQfLbX4E_nBritgQ0KBcndfDcBePecL036Vy4WF8tD4a9cQ"/>
+</div>
+</header>
+<main class="pt-24 px-6 space-y-10 max-w-2xl mx-auto">
+<!-- Hero: Insight Bar Chart Section -->
+<section class="space-y-6">
+<div class="space-y-1">
+<span class="text-on-surface-variant text-sm font-medium tracking-wide uppercase">Performance Overview</span>
+<h2 class="text-3xl font-bold font-headline text-on-surface">32.4 <span class="text-lg font-medium text-on-surface-variant">MPG</span></h2>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[8px] space-y-8">
+<div class="flex items-end justify-between h-40 gap-2">
+<!-- Simple Bar Chart -->
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[60%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Mon</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[45%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Tue</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[85%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Wed</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary rounded-t-[4px] h-[95%] transition-all"></div>
+<span class="text-[10px] text-primary font-bold">Thu</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[40%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Fri</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[30%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Sat</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3">
+<div class="w-full bg-primary-container/40 rounded-t-[4px] h-[55%] transition-all"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Sun</span>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/10">
+<p class="text-sm text-on-surface-variant">Your efficiency is <span class="text-primary font-semibold">4% higher</span> than last week.</p>
+</div>
+</div>
+</section>
+<!-- Anomaly Alert -->
+<section>
+<div class="bg-error-container/10 p-4 rounded-[8px] flex items-start gap-4 ring-1 ring-error-container/20">
+<div class="p-2 bg-error-container/20 rounded-full">
+<span class="material-symbols-outlined text-error text-xl" data-icon="warning">warning</span>
+</div>
+<div class="space-y-1">
+<h4 class="text-sm font-bold text-on-error-container font-headline">Anomaly detected on Oct 05</h4>
+<p class="text-xs text-on-error-container/80 leading-relaxed">Refueling cost exceeded your usual average by 18%. Possible price hike or unusual consumption detected.</p>
+</div>
+</div>
+</section>
+<!-- Refueling Log Table -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold font-headline text-on-surface">Refueling Log</h3>
+<button class="text-primary text-sm font-semibold hover:underline">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-separate border-spacing-y-2">
+<thead>
+<tr class="text-left">
+<th class="pb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
+<th class="pb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Brand</th>
+<th class="pb-2 px-4 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Cost</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="bg-surface-container-lowest hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 rounded-l-[8px] font-medium text-on-surface">Oct 12, 2023</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-secondary-container" data-icon="local_gas_station">local_gas_station</span>
+</div>
+<span class="font-medium">Terpel</span>
+</div>
+</td>
+<td class="py-4 px-4 rounded-r-[8px] text-right font-bold text-primary">$42.50</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:bg-surface-container transition-colors">
+<td class="py-4 px-4 rounded-l-[8px] font-medium text-on-surface">Oct 05, 2023</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="local_gas_station">local_gas_station</span>
+</div>
+<span class="font-medium">Primax</span>
+</div>
+</td>
+<td class="py-4 px-4 rounded-r-[8px] text-right font-bold text-error">$68.20</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:bg-surface-container transition-colors">
+<td class="py-4 px-4 rounded-l-[8px] font-medium text-on-surface">Sep 28, 2023</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-secondary-container" data-icon="local_gas_station">local_gas_station</span>
+</div>
+<span class="font-medium">Terpel</span>
+</div>
+</td>
+<td class="py-4 px-4 rounded-r-[8px] text-right font-bold text-primary">$41.15</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:bg-surface-container transition-colors">
+<td class="py-4 px-4 rounded-l-[8px] font-medium text-on-surface">Sep 21, 2023</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" data-icon="local_gas_station">local_gas_station</span>
+</div>
+<span class="font-medium">Primax</span>
+</div>
+</td>
+<td class="py-4 px-4 rounded-r-[8px] text-right font-bold text-primary">$39.80</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Quick Action Suggestion -->
+<section class="bg-primary/5 rounded-xl p-6 border border-primary/10 flex items-center justify-between">
+<div class="space-y-1">
+<h4 class="font-bold text-primary font-headline">Eco-Driving Tip</h4>
+<p class="text-xs text-on-surface-variant max-w-[200px]">Gentle acceleration can improve your fuel economy by up to 15%.</p>
+</div>
+<button class="bg-primary text-white h-10 w-10 rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl" data-icon="lightbulb">lightbulb</span>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-4 bg-[#faf9f6]/70 backdrop-blur-xl rounded-t-[3rem] shadow-[0px_-4px_40px_0px_rgba(48,51,48,0.06)]">
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[0.75rem] font-medium mt-1">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[0.75rem] font-medium mt-1">Navigate</span>
+</div>
+<!-- Active Tab: History -->
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-[#006c53] to-[#8ff6d0] text-white rounded-full px-6 py-2 tap-highlight-none scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="local_gas_station">local_gas_station</span>
+<span class="text-[0.75rem] font-medium mt-1">History</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[0.75rem] font-medium mt-1">Settings</span>
+</div>
+</nav>
+</body></html>

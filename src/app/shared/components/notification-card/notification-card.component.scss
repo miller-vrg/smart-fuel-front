@@ -1,0 +1,138 @@
+/* ── Notification Card ───────────────────────────── */
+:host {
+  display: block;
+}
+
+.notification-card {
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Type Variants ── */
+  &--traffic {
+    background: rgba(217, 226, 255, 0.3);
+  }
+
+  &--smart-stop {
+    background: rgba(143, 246, 208, 0.2);
+  }
+
+  &--anomaly {
+    background: #fdeaea;
+  }
+
+  &--info {
+    background: rgba(238, 238, 234, 0.5);
+  }
+}
+
+.notification-card__icon-box {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+
+  /* ── Icon variant backgrounds ── */
+  &--traffic {
+    background: var(--secondary-container, #d9e2ff);
+    color: var(--secondary, #495e8e);
+  }
+
+  &--smart-stop {
+    background: var(--primary-container, #8ff6d0);
+    color: var(--primary, #006c53);
+  }
+
+  &--anomaly {
+    background: rgba(250, 116, 111, 0.2);
+    color: var(--error, #a83836);
+  }
+
+  &--info {
+    background: var(--surface-container, #eeeeea);
+    color: var(--on-surface-variant, #5d605c);
+  }
+}
+
+.notification-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.notification-card__title {
+  font-family: var(--font-headline, 'Plus Jakarta Sans', sans-serif);
+  font-weight: 700;
+  font-size: 0.875rem;
+
+  &--traffic {
+    color: var(--secondary, #495e8e);
+  }
+
+  &--smart-stop {
+    color: var(--primary, #006c53);
+  }
+
+  &--anomaly {
+    color: var(--error, #a83836);
+  }
+
+  &--info {
+    color: var(--on-surface, #303330);
+  }
+}
+
+.notification-card__time {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--on-surface-variant, #5d605c);
+  white-space: nowrap;
+}
+
+.notification-card__message {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--on-surface-variant, #5d605c);
+}
+
+.notification-card__action {
+  margin-top: 8px;
+}
+
+.notification-card__btn {
+  padding: 6px 16px;
+  background: var(--primary, #006c53);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--primary-dim, #005f48);
+  }
+}

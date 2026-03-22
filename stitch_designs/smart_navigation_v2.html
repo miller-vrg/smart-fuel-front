@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Serene Drive - Smart Navigation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#525464",
+              "error": "#a83836",
+              "on-primary": "#e5fff2",
+              "outline": "#797b78",
+              "surface": "#faf9f6",
+              "inverse-surface": "#0d0f0d",
+              "on-error-container": "#6e0a12",
+              "surface-tint": "#006c53",
+              "on-secondary-container": "#3c5180",
+              "on-primary-fixed": "#004936",
+              "on-primary-container": "#005d47",
+              "error-container": "#fa746f",
+              "on-primary-fixed-variant": "#00684f",
+              "surface-container-highest": "#e1e3de",
+              "surface-container-high": "#e7e9e4",
+              "surface-container-low": "#f4f4f0",
+              "primary-fixed-dim": "#81e7c3",
+              "on-secondary-fixed": "#283e6c",
+              "tertiary-dim": "#505262",
+              "surface-bright": "#faf9f6",
+              "secondary": "#495e8e",
+              "on-surface-variant": "#5d605c",
+              "surface-dim": "#d9dbd6",
+              "secondary-dim": "#3d5282",
+              "primary": "#006c53",
+              "on-error": "#fff7f6",
+              "on-tertiary": "#faf8ff",
+              "on-tertiary-fixed": "#404251",
+              "on-surface": "#303330",
+              "tertiary-container": "#e6e6fa",
+              "surface-container": "#eeeeea",
+              "surface-variant": "#e1e3de",
+              "background": "#faf9f6",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed-dim": "#d8d8ec",
+              "secondary-fixed-dim": "#c4d4ff",
+              "tertiary": "#5c5e6e",
+              "primary-fixed": "#8ff6d0",
+              "primary-dim": "#005f48",
+              "on-secondary": "#f9f8ff",
+              "on-background": "#303330",
+              "secondary-container": "#d9e2ff",
+              "outline-variant": "#b0b3ae",
+              "surface-container-lowest": "#ffffff",
+              "error-dim": "#67040d",
+              "tertiary-fixed": "#e6e6fa",
+              "secondary-fixed": "#d9e2ff",
+              "inverse-primary": "#98ffd9",
+              "on-tertiary-fixed-variant": "#5c5e6e",
+              "on-secondary-fixed-variant": "#465b8b",
+              "primary-container": "#8ff6d0"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .map-bg {
+            background-color: #f0f2f0;
+            background-image: radial-gradient(#d1d5d1 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container overflow-hidden h-screen flex flex-col">
+<!-- Top AppBar (JSON Source of Truth) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#faf9f6]/70 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center w-10 h-10 hover:bg-[#eeeeea] transition-colors rounded-full active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface" data-icon="menu">menu</span>
+</button>
+<h1 class="text-xl font-bold text-[#006c53] tracking-tight font-headline">Serene Drive</h1>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User avatar" data-alt="Close up portrait of a smiling man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCve26ePSlmCmPmMuKjlfc1ycfdFOsP4gjueqyF8bMZqdcPFfkHFun05Y9Kg9tkOuqnhcPLPxr8Hq40ukS1RoMXoKEpVDJiQqEIXmZ7gqv9AYE6aNddalvijRSUdcUXP5iF5jKnGVqR-BTKloFcgd-vUA5c9QXtQfkj0slVB_ROoFNwauCH1VoERXXGsBOux-lEnhbPRlkbZ-rsf2XrrthzuLktSRAVhe_r9r1Bb_eugyipK4fZ1O80q_V0Vy3-uFAmIZ8HGqSykA"/>
+</div>
+</div>
+</header>
+<!-- Main Navigation Canvas -->
+<main class="relative flex-1 w-full map-bg overflow-hidden">
+<!-- Mock Map Environment -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full relative" data-location="Bogotá" style="">
+<!-- Route Path (SVG) -->
+<svg class="absolute inset-0 w-full h-full" fill="none" viewbox="0 0 400 800" xmlns="http://www.w3.org/2000/svg">
+<path class="opacity-30" d="M200 800C200 800 200 600 240 500C280 400 320 350 200 250C80 150 150 50 150 0" stroke="#006c53" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"></path>
+<path d="M200 800C200 800 200 600 240 500C280 400 320 350 200 250C80 150 150 50 150 0" stroke="#8ff6d0" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+</svg>
+<!-- Vehicle Indicator -->
+<div class="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center">
+<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg border-4 border-surface-container-lowest">
+<span class="material-symbols-outlined text-white text-sm" data-icon="navigation" style="font-variation-settings: 'FILL' 1;">navigation</span>
+</div>
+</div>
+<!-- POI: Primax Central (Smart Stop) -->
+<div class="absolute top-[35%] right-[15%] group">
+<div class="relative">
+<!-- Connecting Line to Route -->
+<div class="absolute top-1/2 -left-8 w-8 h-[2px] bg-primary/20"></div>
+<!-- Callout Card -->
+<div class="bg-surface-container-lowest p-3 rounded-lg shadow-sm border border-outline-variant/10 flex flex-col gap-1 min-w-[140px]">
+<div class="flex items-center gap-2">
+<div class="p-1.5 bg-secondary-container rounded-md">
+<span class="material-symbols-outlined text-on-secondary-container text-xs" data-icon="local_gas_station" style="font-variation-settings: 'FILL' 1;">local_gas_station</span>
+</div>
+<span class="text-xs font-bold text-on-surface">Primax Central</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant leading-none">Smart Stop Recommended</span>
+<span class="text-[10px] font-semibold text-primary">Low fuel: Save 4 min here</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Maneuver Overlay -->
+<section class="absolute top-20 left-4 right-4 z-20">
+<div class="bg-surface-container-lowest/90 backdrop-blur-xl p-4 rounded-lg flex items-center gap-4 shadow-sm">
+<div class="w-14 h-14 bg-primary text-white flex items-center justify-center rounded-md">
+<span class="material-symbols-outlined text-3xl" data-icon="turn_right" style="font-variation-settings: 'FILL' 0, 'wght' 600;">turn_right</span>
+</div>
+<div class="flex flex-col">
+<h2 class="text-lg font-bold text-on-surface font-headline leading-tight">In 400m</h2>
+<p class="text-sm text-on-surface-variant">Exit onto Av. Boyacá</p>
+</div>
+</div>
+</section>
+<!-- Floating Action Controls (Zoom/Recenter) -->
+<div class="absolute right-4 bottom-32 flex flex-col gap-2 z-20">
+<button class="w-12 h-12 bg-surface-container-lowest/80 backdrop-blur-md rounded-lg flex items-center justify-center text-on-surface-variant shadow-sm hover:bg-surface-container-lowest transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<button class="w-12 h-12 bg-surface-container-lowest/80 backdrop-blur-md rounded-lg flex items-center justify-center text-on-surface-variant shadow-sm hover:bg-surface-container-lowest transition-all">
+<span class="material-symbols-outlined" data-icon="remove">remove</span>
+</button>
+<button class="w-12 h-12 bg-primary-container text-on-primary-container rounded-lg flex items-center justify-center shadow-sm mt-2">
+<span class="material-symbols-outlined" data-icon="my_location" style="font-variation-settings: 'FILL' 1;">my_location</span>
+</button>
+</div>
+<!-- Status & Arrival Bar -->
+<section class="absolute bottom-0 left-0 w-full z-40 px-4 pb-28">
+<div class="bg-surface-container-lowest p-5 rounded-lg shadow-[0px_10px_40px_rgba(0,0,0,0.08)] flex justify-between items-center">
+<div class="flex flex-col">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-extrabold text-on-surface font-headline tracking-tight">18</span>
+<span class="text-sm font-medium text-on-surface-variant">min</span>
+</div>
+<span class="text-xs text-on-surface-variant font-medium">Arrival 14:42</span>
+</div>
+<div class="h-8 w-[1px] bg-surface-container-high mx-2"></div>
+<div class="flex flex-col items-center">
+<span class="text-sm font-bold text-on-surface">6.4 km</span>
+<div class="flex items-center gap-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-[10px] text-primary font-bold uppercase tracking-wider">On track</span>
+</div>
+</div>
+<button class="bg-error-container/20 text-error px-5 py-2.5 rounded-full font-bold text-sm hover:bg-error-container/30 transition-all">
+                    End Trip
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (JSON Source of Truth) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-4 bg-[#faf9f6]/70 backdrop-blur-xl rounded-t-[3rem] shadow-[0px_-4px_40px_0px_rgba(48,51,48,0.06)]">
+<!-- Dashboard -->
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[0.875rem] font-medium font-body">Dashboard</span>
+</div>
+<!-- Navigate (ACTIVE) -->
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-[#006c53] to-[#8ff6d0] text-white rounded-full px-6 py-2 transition-all cursor-pointer active:scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="explore" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="text-[0.875rem] font-medium font-body">Navigate</span>
+</div>
+<!-- History -->
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="local_gas_station">local_gas_station</span>
+<span class="text-[0.875rem] font-medium font-body">History</span>
+</div>
+<!-- Settings -->
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[0.875rem] font-medium font-body">Settings</span>
+</div>
+</nav>
+</body></html>

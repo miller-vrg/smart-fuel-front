@@ -1,0 +1,133 @@
+<div class="preferences">
+  <!-- Hero -->
+  <section class="pref-hero">
+    <h2 class="pref-hero__title">Preferences</h2>
+    <p class="pref-hero__subtitle">Customize your proactive navigation nodes and vehicle behaviors for a tranquil journey.</p>
+  </section>
+
+  <!-- Toggle Cards -->
+  <section class="toggle-section">
+    @for( setting of toggleSettings; track setting.id; let i = $index ){
+      <div class="toggle-card">
+        <div class="toggle-card__left">
+          <div class="toggle-card__icon-box" [ngClass]="setting.iconContainerClass">
+            <span class="material-symbols-outlined">{{ setting.icon }}</span>
+          </div>
+          <div class="toggle-card__text">
+            <p class="toggle-card__label">{{ setting.label }}</p>
+            <p class="toggle-card__sublabel">{{ setting.sublabel }}</p>
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox"
+                 [checked]="setting.enabled"
+                 (change)="toggleSetting(i)" />
+          <span class="toggle__slider"></span>
+        </label>
+      </div>
+    }
+  </section>
+
+  <!-- Refueling Priority -->
+  <section class="priority-section">
+    <div class="priority-section__header">
+      <h3 class="priority-section__title">Refueling Priority</h3>
+      <span class="priority-section__hint">Drag to reorder</span>
+    </div>
+
+    <div class="priority-list">
+     @for(item of fuelPriorities; track item.name; let i = $index){
+      <div class="priority-item">
+        <div class="priority-item__drag">
+          <span class="material-symbols-outlined" style="font-size: 14px;">drag_indicator</span>
+        </div>
+        <div class="priority-item__rank">
+          <span>{{ i + 1 }}</span>
+        </div>
+        <div class="priority-item__info">
+          <ng-container *ngIf="!item.isEditing">
+            <p class="priority-item__name">{{ item.name }}</p>
+            <p class="priority-item__desc">{{ item.description }}</p>
+          </ng-container>
+          <ng-container *ngIf="item.isEditing">
+            <input type="text" [(ngModel)]="item.name" class="priority-item__edit-input" placeholder="Brand name" />
+          </ng-container>
+        </div>
+        
+        <div class="priority-item__actions">
+          <span class="material-symbols-outlined priority-item__action-btn"
+                (click)="toggleEdit(item)">
+            {{ item.isEditing ? 'check' : 'edit' }}
+          </span>
+          <span class="material-symbols-outlined priority-item__action-btn priority-item__action-btn--danger"
+                (click)="removeBrand(i)">
+            delete
+          </span>
+          <span class="material-symbols-outlined priority-item__star"
+                (click)="toggleStar(item)"
+                [style.cursor]="'pointer'"
+                [style.font-variation-settings]="'FILL ' + (item.starred ? '1' : '0')"
+                [class.priority-item__star--filled]="item.starred">star</span>
+        </div>
+      </div>
+    }
+    </div>
+
+    <div class="priority-add">
+      <input type="text" [(ngModel)]="newBrandName" placeholder="Add new preferred brand..." class="priority-add__input" (keyup.enter)="addBrand()" />
+      <button class="priority-add__btn" (click)="addBrand()" [disabled]="!newBrandName.trim()">
+        <span class="material-symbols-outlined">add</span> Add
+      </button>
+    </div>
+  </section>
+
+  <!-- Navigation Preferences -->
+  <section class="priority-section" style="margin-top: 24px;">
+    <div class="priority-section__header">
+      <h3 class="priority-section__title">Smart Navigation Rules</h3>
+      <span class="priority-section__hint">Proactive alerts</span>
+    </div>
+
+    <div class="priority-list">
+      <div class="priority-item" style="padding: 16px;">
+        <div class="priority-item__info">
+          <p class="priority-item__name">Reserve Fuel Warning</p>
+          <p class="priority-item__desc">Search for gas stations this far from empty tank.</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" [(ngModel)]="notifyGasStationKmBefore" style="width: 60px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
+          <span style="font-size: 0.875rem; color: var(--on-surface-variant);">km</span>
+        </div>
+      </div>
+
+      <div class="priority-item" style="padding: 16px;">
+        <div class="priority-item__info">
+          <p class="priority-item__name">Rest Stop Reminder</p>
+          <p class="priority-item__desc">Suggest a rest stop every X hours of trip time.</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" [(ngModel)]="notifyRestStopHours" placeholder="Off" style="width: 60px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
+          <span style="font-size: 0.875rem; color: var(--on-surface-variant);">hrs</span>
+        </div>
+      </div>
+
+      <div class="priority-item" style="padding: 16px;">
+        <div class="priority-item__info">
+          <p class="priority-item__name">Max Speed Limit</p>
+          <p class="priority-item__desc">Get alerts and visual cues when exceeding this speed.</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" [(ngModel)]="maxSpeedLimit" style="width: 60px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
+          <span style="font-size: 0.875rem; color: var(--on-surface-variant);">km/h</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Serene Suggestions Banner -->
+  <section class="serene-banner">
+    <h4 class="serene-banner__title">Serene Suggestions</h4>
+    <p class="serene-banner__text">We use these preferences to suggest stops that match your brand loyalty and comfort needs.</p>
+    <button class="serene-banner__btn" (click)="saveConfig()">Save Configuration</button>
+  </section>
+</div>

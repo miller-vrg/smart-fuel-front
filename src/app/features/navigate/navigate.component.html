@@ -1,0 +1,289 @@
+<div class="nav-page">
+
+  <!-- Floating Action Button for Starting Route (only when NOT navigating) -->
+  @if (possibleRoutes.length > 0 && !showRouteList && !isNavigating) {
+    <div class="floating-fab-container">
+      <button class="fab-btn" (click)="startCurrentRoute()">
+        <span class="material-symbols-outlined">navigation</span>
+      </button>
+    </div>
+  }
+
+  <!-- Active Vehicle Badge (Vertical on Left) -->
+  @if (isNavigating && activeVehicle) {
+    <div class="active-vehicle-badge">
+      <div class="active-vehicle-badge__icon">
+        <span class="material-symbols-outlined">directions_car</span>
+      </div>
+      <div class="active-vehicle-badge__name">
+        <span>{{ activeVehicle.brand }}</span>
+        <strong>{{ activeVehicle.model }}</strong>
+      </div>
+    </div>
+  }
+
+  <!-- Speed Limit Alert Overlay -->
+  @if (showSpeedAlert) {
+    <div class="speed-alert-overlay">
+      <div class="speed-alert-card">
+        <span class="material-symbols-outlined">warning</span>
+        <div class="speed-alert-card__text">
+          <p>Límite de velocidad</p>
+          <strong>Reduce tu marcha</strong>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Search Bar Overlay — completely hidden during navigation -->
+  @if (!isNavigating) {
+    <div class="search-bar">
+      <div class="search-bar__input-box">
+        <span class="material-symbols-outlined search-bar__icon" (click)="clearSearch()">search</span>
+        <input type="text"
+               class="search-bar__input"
+               placeholder="¿A dónde vas?"
+               [(ngModel)]="searchQuery"
+               (keyup.enter)="searchDestination()"/>
+        <button class="search-bar__clear" *ngIf="searchQuery" (click)="clearSearch()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Search Results Dropdown -->
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <div class="search-result-item" *ngFor="let result of searchResults" (click)="selectSearchResult(result)">
+          <span class="material-symbols-outlined">location_on</span>
+          <div class="search-result-text">
+            <p class="search-result-name">{{ result.name || result.display_name.split(',')[0] }}</p>
+            <p class="search-result-address">{{ result.display_name }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Alternative Routes List (visible even during navigation if toggled) -->
+  @if (possibleRoutes.length > 0 && showRouteList) {
+    <div class="route-list" [class.route-list--active]="true">
+    <div class="route-list__brand-header">
+      <h2 class="route-list__brand-title">Smart Fuel</h2>
+      <p class="route-list__brand-subtitle">Selecciona la mejor ruta para tu viaje</p>
+    </div>
+
+    <div class="route-list__header">
+      <span class="route-list__title">Rutas Sugeridas</span>
+      <button class="route-list__cancel-btn" (click)="clearSearch()">Cancelar</button>
+    </div>
+
+    <div class="route-list__scroll-area">
+      @for (route of possibleRoutes; track route.index) {
+          <div class="route-item" 
+               [class.route-item--selected]="selectedRouteIndex === route.index"
+               (click)="selectRouteIndex(route.index)">
+            <div class="route-item__main">
+              <div class="route-item__summary">
+                <strong>{{ route.summary }}</strong>
+                <span class="route-item__stops" [class.route-item__stops--alert]="route.stopsRequired > 0">
+                  <span class="material-symbols-outlined">local_gas_station</span>
+                  {{ route.stopsRequired === 0 ? 'Sin paradas' : route.stopsRequired + (route.stopsRequired === 1 ? ' parada' : ' paradas') }}
+                </span>
+              </div>
+              <div class="route-item__details">
+                {{ (route.distance / 1000).toFixed(1) }} km • {{ route.formattedDuration }}
+              </div>
+            </div>
+            <button class="route-item__start-btn" (click)="startNavigationFromAlternative($event, route.index)">
+              <span class="material-symbols-outlined">navigation</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Maneuver Overlay — only visible during active navigation and for a few seconds -->
+  @if (isNavigating && showManeuver) {
+    <section class="maneuver-overlay">
+      <div class="maneuver-card">
+        <div class="maneuver-card__icon-box">
+          <span class="material-symbols-outlined"
+                style="font-size: 1.875rem; font-variation-settings: 'FILL' 0, 'wght' 600;">
+            {{ maneuver.icon }}
+          </span>
+        </div>
+        <div class="maneuver-card__text">
+          <h2 class="maneuver-card__distance">{{ maneuver.distance }}</h2>
+          <p class="maneuver-card__street">{{ maneuver.street }}</p>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- GPS Error Banner -->
+  @if (geoError) {
+    <div class="geo-error-banner">
+      <span class="material-symbols-outlined" style="font-size: 18px;">location_off</span>
+      <span>{{ geoError }}</span>
+    </div>
+  }
+
+  <!-- Floating Controls (always visible) -->
+  <div class="float-controls">
+    <button class="float-controls__btn" (click)="zoomIn()" aria-label="Zoom in">
+      <span class="material-symbols-outlined">add</span>
+    </button>
+    <button class="float-controls__btn" (click)="zoomOut()" aria-label="Zoom out">
+      <span class="material-symbols-outlined">remove</span>
+    </button>
+    <button class="float-controls__btn" (click)="togglePitch()" aria-label="3D view">
+      <span class="material-symbols-outlined">3d_rotation</span>
+    </button>
+    <button
+      class="float-controls__btn float-controls__btn--primary"
+      (click)="centerOnUser()"
+      aria-label="My location">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">my_location</span>
+    </button>
+  </div>
+
+  <!-- Status & Arrival Bar — only visible during active navigation -->
+  @if (isNavigating) {
+    <section class="arrival-bar" [class.arrival-bar--condensed]="isArrivalBarCondensed">
+      @if (!isArrivalBarCondensed) {
+        <div class="arrival-bar__card" (click)="isArrivalBarCondensed = true">
+          <div class="arrival-bar__col">
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+               <button class="arrival-bar__inline-btn" (click)="toggleRouteList(); $event.stopPropagation()">
+                 <span class="material-symbols-outlined">route</span>
+               </button>
+               @if (isAutonomyCritical) {
+                 <div class="arrival-bar__inline-btn arrival-bar__inline-btn--alert">
+                   <span class="material-symbols-outlined">local_gas_station</span>
+                 </div>
+               }
+            </div>
+            <div class="arrival-bar__eta">
+              <span class="arrival-bar__eta-value">{{ eta }}</span>
+              <span class="arrival-bar__eta-unit">min</span>
+            </div>
+            <span class="arrival-bar__arrival-time">Llegada {{ arrivalTime }}</span>
+          </div>
+
+          <div class="arrival-bar__divider"></div>
+
+          <div class="arrival-bar__col arrival-bar__col--center">
+            <span class="arrival-bar__distance">{{ routeDistance }}</span>
+            <div class="arrival-bar__status">
+              <span class="arrival-bar__status-text" style="color: var(--on-surface-variant); font-weight: normal; font-size: 0.75rem; text-transform: none; text-align: center;">{{ destinationName | slice:0:18 }}{{ destinationName.length > 18 ? '...' : '' }}</span>
+            </div>
+          </div>
+
+          <div class="arrival-bar__divider"></div>
+
+          <div class="arrival-bar__col arrival-bar__col--speed" [ngClass]="getSpeedStatusClass()">
+            <div class="arrival-bar__speed">{{ currentSpeed }}</div>
+            <span class="arrival-bar__speed-unit">km/h</span>
+          </div>
+
+          <button class="arrival-bar__end-btn" (click)="endTrip(); $event.stopPropagation()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      } @else {
+        <div class="arrival-bar__circles" (click)="showFullArrivalBar()">
+          <div class="hud-circle hud-circle--route" (click)="toggleRouteList(); $event.stopPropagation()">
+            <span class="material-symbols-outlined">route</span>
+          </div>
+
+          @if (isAutonomyCritical) {
+            <div class="hud-circle hud-circle--fuel-alert">
+              <span class="material-symbols-outlined">local_gas_station</span>
+              <span class="hud-circle__unit">BAJO</span>
+            </div>
+          }
+
+          <div class="hud-circle hud-circle--eta">
+            <span class="hud-circle__val">{{ eta }}</span>
+            <span class="hud-circle__unit">min</span>
+          </div>
+          <div class="hud-circle hud-circle--dist">
+            <span class="hud-circle__val">{{ routeDistance }}</span>
+            <span class="hud-circle__unit">km</span>
+          </div>
+          <div class="hud-circle hud-circle--speed" [ngClass]="getSpeedStatusClass()">
+            <span class="hud-circle__val">{{ currentSpeed }}</span>
+            <span class="hud-circle__unit">km/h</span>
+          </div>
+          <div class="hud-circle hud-circle--cancel" (click)="endTrip(); $event.stopPropagation()">
+            <span class="material-symbols-outlined">close</span>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Vehicle Selector Modal -->
+  @if (showVehicleSelector) {
+    <div class="vehicle-selector-overlay">
+      <div class="vehicle-selector-card">
+        <h3>Selecciona tu Vehículo</h3>
+        <p>Calcularemos la alerta de autonomía basada en tu selección.</p>
+        <div class="vehicle-list">
+          @for (v of availableVehicles; track v.id) {
+            <div class="vehicle-item" (click)="confirmVehicle(v)">
+              <div class="vehicle-item__icon">
+                <span class="material-symbols-outlined">directions_car</span>
+              </div>
+              <div class="vehicle-item__info">
+                <strong>{{ v.brand }} {{ v.model }}</strong>
+                <span>{{ v.licensePlate }} • {{ v.currentFuelGallons }}/{{ v.fuelCapacityGallons }} Gal</span>
+              </div>
+            </div>
+          } @empty {
+            <div style="text-align:center; padding:16px; color:var(--on-surface-variant); opacity:0.7; font-size:14px;">
+              No tienes vehículos registrados aún. ¡Añade uno para empezar!
+            </div>
+          }
+        </div>
+        <button class="cancel-btn" style="width:100%; margin-top:16px; background:var(--primary); color:white;" (click)="openAddVehicleForm()">+ Nuevo Vehículo</button>
+        <button class="cancel-btn" (click)="showVehicleSelector = false">Cancelar</button>
+      </div>
+    </div>
+  }
+
+  <!-- Add Vehicle Modal -->
+  @if (showAddVehicleModal) {
+    <div class="vehicle-selector-overlay" style="z-index: 210;">
+      <div class="vehicle-selector-card">
+        <h3>Registrar Vehículo</h3>
+        <p>Detalles básicos de tu auto para estimar autonomía y descansos inteligentemente.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px; overflow-y:auto; max-height:40vh; padding-right:8px;">
+           <input type="text" placeholder="Placa (Ej: XYZ-123)" [(ngModel)]="newVehicleForm.licensePlate" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+           <input type="text" placeholder="Marca (Ej: Nissan)" [(ngModel)]="newVehicleForm.brand" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+           <input type="text" placeholder="Modelo (Ej: Sentra)" [(ngModel)]="newVehicleForm.model" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+           <input type="number" placeholder="Capacidad Tanque (Galones)" [(ngModel)]="newVehicleForm.fuelCapacityGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+           <input type="number" placeholder="Rendimiento (Km/Gal)" [(ngModel)]="newVehicleForm.avgKmPerGallon" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+           <input type="number" placeholder="Gasolina Actual (Galones)" [(ngModel)]="newVehicleForm.currentFuelGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+        </div>
+        
+        <button class="cancel-btn" style="background:var(--primary); color:white;" (click)="saveNewVehicle()">Guardar Vehículo</button>
+        <button class="cancel-btn" (click)="showAddVehicleModal = false">Cancelar</button>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Trip / Autonomy Alert Modal -->
+  @if (showTripAlertModal) {
+    <div class="vehicle-selector-overlay" style="z-index: 200;">
+      <div class="vehicle-selector-card" style="align-items: center; text-align: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="font-size:48px; color:var(--primary); margin-bottom: 8px;">notifications_active</span>
+        <h3>{{ tripAlertData?.title }}</h3>
+        <p style="color: var(--on-surface); font-size: 1rem; margin-top: 8px;">{{ tripAlertData?.message }}</p>
+        <p style="font-size: 0.875rem; font-weight: bold; color: var(--primary); margin-top: 4px;">{{ tripAlertData?.detail }}</p>
+        <button class="cancel-btn" style="width:100%; margin-top: 16px;" (click)="showTripAlertModal = false">Entendido</button>
+      </div>
+    </div>
+  }
+</div>

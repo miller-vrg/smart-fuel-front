@@ -1,0 +1,91 @@
+<div class="dashboard" *ngIf="{ range: range$ | async, vehicle: vehicle$ | async } as data">
+  <!-- Hero: Welcome -->
+  <section class="hero">
+    <h2 class="hero__title">Hello, {{ userName }}</h2>
+    <p class="hero__subtitle" *ngIf="data.vehicle">Your {{ data.vehicle.brand }} {{ data.vehicle.model }} is optimized for tranquility today.</p>
+  </section>
+
+  <!-- Fuel Gauge Card -->
+  <div class="fuel-card" *ngIf="data.range">
+    <div class="fuel-card__info">
+      <p class="fuel-card__label">Current Range</p>
+      <p class="fuel-card__value">{{ data.range.safeRangeKm | number:'1.0-0' }}<span class="fuel-card__unit">km</span></p>
+      <div class="fuel-card__eco">
+        <span class="material-symbols-outlined fuel-card__eco-icon">eco</span>
+        <span>{{ data.range.status === 'SAFE' ? 'Optimal Efficiency' : 'Action Required' }}</span>
+      </div>
+    </div>
+    <div class="fuel-knob">
+      <div class="fuel-knob__track"></div>
+      <div class="fuel-knob__fill" [style.background]="'conic-gradient(from 180deg, #006c53 0%, #8ff6d0 ' + data.range.fuelLevelPercent + '%, transparent ' + data.range.fuelLevelPercent + '%) border-box'"></div>
+      <div class="fuel-knob__center">
+        <span class="fuel-knob__value">{{ data.range.fuelLevelPercent | number:'1.0-0' }}%</span>
+        <span class="fuel-knob__label">Full</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Journey Button -->
+  <button class="cta-button">
+    <span class="material-symbols-outlined cta-button__icon"
+          style="font-variation-settings: 'FILL' 1;">bolt</span>
+    Start Serene Journey
+  </button>
+
+  <!-- Efficiency Bento Grid -->
+  <div class="bento-grid">
+    <!-- Efficiency Chart -->
+    <div class="chart-card bento-grid__full">
+      <div class="chart-card__header">
+        <div>
+          <h3 class="chart-card__title">Efficiency Trend</h3>
+          <p class="chart-card__subtitle">Last 7 drives</p>
+        </div>
+        <span class="chart-card__badge">+12%</span>
+      </div>
+      <div class="chart-card__bars">
+        <div *ngFor="let bar of efficiencyData; let last = last; let i = index"
+             class="bar-col"
+             [class.bar-col--highlight]="i >= efficiencyData.length - 2">
+          <div class="bar-col__bar"
+               [style.height.%]="bar.height"></div>
+          <span class="bar-col__label">{{ bar.day }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat Card: Drive Time -->
+    <div class="stat-card stat-card--secondary">
+      <span class="material-symbols-outlined stat-card__icon">timer</span>
+      <p class="stat-card__label">Drive Time</p>
+      <p class="stat-card__value">12.4h</p>
+    </div>
+
+    <!-- Stat Card: Air Quality -->
+    <div class="stat-card stat-card--tertiary">
+      <span class="material-symbols-outlined stat-card__icon">cloud</span>
+      <p class="stat-card__label">Air Quality</p>
+      <p class="stat-card__value">Pure</p>
+    </div>
+  </div>
+
+  <!-- Smart Suggestion -->
+  <div class="suggestion-card">
+    <div class="suggestion-card__header">
+      <div class="suggestion-card__icon-wrap">
+        <span class="material-symbols-outlined">psychology</span>
+      </div>
+      <div>
+        <h4 class="suggestion-card__title">Smart Suggestion</h4>
+        <p class="suggestion-card__subtitle">Avoiding heavy traffic on I-95</p>
+      </div>
+    </div>
+    <div class="suggestion-card__map">
+      <img
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPtzekR2Uz9HHgunKjzM37bknR1UXFv5nGoMY67GQBTtz22qFFRB1r1lhcG3voYzy-tbJAKs8pCuHlUj_Aqo8-388z1bdKB-3DSBKvaseCKpdcYhUB07tWGfibRE2zoSzbiL77Miqpcy_lbyTp9vCJnX8aFsiQrHCKYy1eKFeM_2rmSogB1XCaUFERFyT1fLVEZSirTrw19B7Nf3eAY3bH3H8UYl3xN4XjAjYL731g1eSy1LSyAqDJR3ubbyp8aP9EQX0UNHEL4A"
+        alt="Map preview"
+        class="suggestion-card__map-img" />
+      <button class="suggestion-card__map-btn">View Alternative Route</button>
+    </div>
+  </div>
+</div>

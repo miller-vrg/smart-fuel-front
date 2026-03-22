@@ -1,0 +1,24 @@
+<div class="notification-card" [ngClass]="'notification-card--' + typeClass">
+  <div class="notification-card__icon-box" [ngClass]="'notification-card__icon-box--' + typeClass">
+    <span class="material-symbols-outlined">{{ config.icon }}</span>
+  </div>
+
+  <div class="notification-card__body">
+    <div class="notification-card__header">
+      <span class="notification-card__title" [ngClass]="'notification-card__title--' + typeClass">
+        {{ notification.title }}
+      </span>
+      <span class="notification-card__time">
+        {{ notification.timestamp | date:'shortTime' }}
+      </span>
+    </div>
+    
+    <p class="notification-card__message">
+      {{ notification.message }}
+    </p>
+
+    <div *ngIf="notification.type === 'smart_stop'" class="notification-card__action">
+      <button class="notification-card__btn">View on Map</button>
+    </div>
+  </div>
+</div>

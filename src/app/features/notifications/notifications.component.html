@@ -1,0 +1,32 @@
+<!-- Notifications Page Header -->
+<header class="notif-header">
+  <div class="notif-header__left">
+    <button class="icon-btn" (click)="goBack()" aria-label="Go back">
+      <span class="material-symbols-outlined" style="color: var(--primary);">arrow_back</span>
+    </button>
+    <h1 class="notif-header__title">Notifications</h1>
+  </div>
+  <button class="icon-btn" (click)="notifService.markAllAsRead()" aria-label="Mark all read">
+    <span class="material-symbols-outlined" style="color: var(--on-surface-variant);">done_all</span>
+  </button>
+</header>
+
+<div class="notification-list">
+  <!-- Section Label -->
+  <h2 class="section-label">Recent</h2>
+
+  @if (todayNotifications.length > 0) {
+    @for (notif of todayNotifications; track notif.id) {
+      <app-notification-card [notification]="notif"/>
+    }
+  } @else {
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state__icon-wrap">
+        <span class="material-symbols-outlined">notifications_off</span>
+      </div>
+      <h3 class="empty-state__title">Stay Serene</h3>
+      <p class="empty-state__subtitle">You are all caught up with your driving insights.</p>
+    </div>
+  }
+</div>

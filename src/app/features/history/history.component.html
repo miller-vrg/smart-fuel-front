@@ -1,0 +1,75 @@
+<div class="history">
+  <!-- Hero: Performance Overview -->
+  <section class="perf-hero" *ngIf="summary$ | async as summary">
+    <span class="perf-hero__label">Performance Overview</span>
+    <h2 class="perf-hero__value">{{ summary.avgConsumption | number:'1.1-1' }} <span class="perf-hero__unit">MPG</span></h2>
+  </section>
+
+  <!-- Weekly Bar Chart (Keeping mock since API doesn't have weekly bars specifically) -->
+  <div class="week-chart">
+    <div class="week-chart__bars">
+      <div *ngFor="let bar of weeklyData"
+           class="week-bar"
+           [class.week-bar--active]="bar.active">
+        <div class="week-bar__fill" [style.height.%]="bar.height"></div>
+        <span class="week-bar__label" [class.week-bar__label--active]="bar.active">{{ bar.day }}</span>
+      </div>
+    </div>
+    <div class="week-chart__footer">
+      <p>Your efficiency is <span class="text-primary fw-600">4% higher</span> than last week.</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="summary$ | async as summary">
+    <!-- Anomaly Alert -->
+    <section class="anomaly-alert" *ngIf="summary.anomalies?.length > 0">
+      <div class="anomaly-alert__icon-wrap">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="anomaly-alert__body">
+        <h4 class="anomaly-alert__title">Anomaly detected</h4>
+        <p class="anomaly-alert__text">{{ summary.anomalies[0].message || 'Unusual consumption detected.' }}</p>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- Refueling Log -->
+  <section class="refuel-section" *ngIf="logs$ | async as logs">
+    <div class="refuel-section__header">
+      <h3 class="refuel-section__title">Refueling Log</h3>
+      <button class="refuel-section__link">View All</button>
+    </div>
+
+    <div class="refuel-table">
+      <div class="refuel-table__head">
+        <span>Date</span>
+        <span>Brand</span>
+        <span class="refuel-table__head--right">Cost</span>
+      </div>
+
+      <div *ngFor="let entry of logs" class="refuel-row">
+        <span class="refuel-row__date">{{ entry.loggedAt | date:'MMM dd, yyyy' }}</span>
+        <div class="refuel-row__brand">
+          <div class="refuel-row__brand-icon icon--tertiary">
+            <span class="material-symbols-outlined" style="font-size: 14px;">local_gas_station</span>
+          </div>
+          <span class="refuel-row__brand-name">{{ entry.stationBrand || 'Unknown' }}</span>
+        </div>
+        <span class="refuel-row__cost">
+          {{ entry.totalCost | currency:'USD':'symbol':'1.2-2' }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Eco Tip -->
+  <section class="eco-tip">
+    <div class="eco-tip__content">
+      <h4 class="eco-tip__title">Eco-Driving Tip</h4>
+      <p class="eco-tip__text">Gentle acceleration can improve your fuel economy by up to 15%.</p>
+    </div>
+    <button class="eco-tip__btn">
+      <span class="material-symbols-outlined">lightbulb</span>
+    </button>
+  </section>
+</div>

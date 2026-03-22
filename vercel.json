@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "public": true,
+  "name": "smart-fuel-frontv1",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://tu-app-en-render.onrender.com/api/$1" },
+    { "source": "/socket.io/(.*)", "destination": "https://tu-app-en-render.onrender.com/socket.io/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -1,0 +1,310 @@
+:host {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: var(--surface, #faf9f6);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: auto;
+  animation: page-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes page-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.history {
+  padding: 80px 24px 32px;
+  max-width: 672px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ── Helpers ─────────────────────────────────────── */
+.text-primary { color: var(--primary); }
+.fw-600       { font-weight: 600; }
+
+/* ── Performance Hero ────────────────────────────── */
+.perf-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__value {
+    font-family: var(--font-headline);
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+
+  &__unit {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--on-surface-variant);
+  }
+}
+
+/* ── Weekly Chart ────────────────────────────────── */
+.week-chart {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-default);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  &__bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 160px;
+    gap: 8px;
+  }
+
+  &__footer {
+    padding-top: 16px;
+    border-top: 1px solid rgba(176, 179, 174, 0.1);
+    font-size: 0.875rem;
+    color: var(--on-surface-variant);
+  }
+}
+
+.week-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  justify-content: flex-end;
+
+  &__fill {
+    width: 100%;
+    background: rgba(143, 246, 208, 0.4);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.4s ease;
+  }
+
+  &--active .week-bar__fill {
+    background: var(--primary);
+  }
+
+  &__label {
+    font-size: 0.625rem;
+    color: var(--on-surface-variant);
+    font-weight: 500;
+
+    &--active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+  }
+}
+
+/* ── Anomaly Alert ───────────────────────────────── */
+.anomaly-alert {
+  background: rgba(250, 116, 111, 0.1);
+  padding: 16px;
+  border-radius: var(--radius-default);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  outline: 1px solid rgba(250, 116, 111, 0.2);
+
+  &__icon-wrap {
+    padding: 8px;
+    background: rgba(250, 116, 111, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .material-symbols-outlined {
+      color: var(--error);
+      font-size: 1.25rem;
+    }
+  }
+
+  &__title {
+    font-family: var(--font-headline);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--on-error-container);
+  }
+
+  &__text {
+    font-size: 0.75rem;
+    color: rgba(110, 10, 18, 0.8);
+    line-height: 1.6;
+    margin-top: 2px;
+  }
+}
+
+/* ── Refueling Log ───────────────────────────────── */
+.refuel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__title {
+    font-family: var(--font-headline);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+
+  &__link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.refuel-table {
+  &__head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.7fr;
+    padding: 0 16px 8px;
+
+    span {
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--on-surface-variant);
+    }
+
+    &--right {
+      text-align: right;
+    }
+  }
+}
+
+.refuel-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.7fr;
+  align-items: center;
+  padding: 16px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-default);
+  margin-bottom: 8px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--surface-container);
+  }
+
+  &__date {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--on-surface);
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__brand-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.icon--secondary {
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+    }
+
+    &.icon--tertiary {
+      background: var(--tertiary-container);
+      color: var(--on-tertiary-container);
+    }
+  }
+
+  &__brand-name {
+    font-weight: 500;
+  }
+
+  &__cost {
+    text-align: right;
+    font-weight: 700;
+    color: var(--primary);
+
+    &--error {
+      color: var(--error);
+    }
+  }
+}
+
+/* ── Eco Tip ─────────────────────────────────────── */
+.eco-tip {
+  background: rgba(0, 108, 83, 0.05);
+  border: 1px solid rgba(0, 108, 83, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &__title {
+    font-family: var(--font-headline);
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  &__text {
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+    max-width: 200px;
+    margin-top: 4px;
+  }
+
+  &__btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 108, 83, 0.2);
+    flex-shrink: 0;
+
+    .material-symbols-outlined {
+      font-size: 1.25rem;
+    }
+  }
+}

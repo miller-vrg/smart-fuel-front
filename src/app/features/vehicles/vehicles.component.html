@@ -1,0 +1,111 @@
+<div class="vehicles-page">
+  <header class="header">
+    <div class="header__content">
+      <h1 class="header__title">Mis Vehículos</h1>
+      <p class="header__subtitle">Administra tu flota personal para cálculos precisos</p>
+    </div>
+    <button class="add-btn" (click) = "openAddModal()">
+      <span class="material-symbols-outlined">add</span>
+      Agregar Vehículo
+    </button>
+  </header>
+
+  <main class="content">
+    @if(isLoading$ | async) {
+      <div class="loading-state">
+        <span class="material-symbols-outlined rotate">sync</span>
+        Cargando vehículos...
+      </div>
+    } @else {
+      <div class="vehicle-grid">
+        @for(v of (vehicles$ | async); track v.id) {
+          <div class="vehicle-card">
+            <div class="vehicle-card__header">
+              <div class="vehicle-card__icon">
+                <span class="material-symbols-outlined">directions_car</span>
+              </div>
+              <div class="vehicle-card__actions">
+                <button class="action-btn" (click)="openEditModal(v)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="action-btn action-btn--danger" (click)="deleteVehicle(v.id)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="vehicle-card__body">
+              <h3 class="vehicle-card__title">{{ v.brand }} {{ v.model }}</h3>
+              <p class="vehicle-card__plate">{{ v.licensePlate }} • {{ v.year }}</p>
+              
+              <div class="vehicle-stats">
+                <div class="stat-item">
+                  <span class="stat-item__label">Capacidad</span>
+                  <span class="stat-item__val">{{ v.fuelCapacityGallons }} Gal</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-item__label">Rendimiento</span>
+                  <span class="stat-item__val">{{ v.avgKmPerGallon }} Km/Gal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <span class="material-symbols-outlined">no_crash</span>
+            <p>No tienes vehículos registrados</p>
+            <button class="text-btn" (click)="openAddModal()">Registrar mi primer vehículo</button>
+          </div>
+        }
+      </div>
+    }
+  </main>
+
+  <!-- CRUD Modal -->
+  @if(showModal) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-sheet" (click)="$event.stopPropagation()">
+        <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
+        
+        <form class="vehicle-form" (submit)="saveVehicle()">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Marca</label>
+              <input type="text" [(ngModel)]="form.brand" name="brand" required placeholder="Ej: Mazda">
+            </div>
+            <div class="form-group">
+              <label>Modelo</label>
+              <input type="text" [(ngModel)]="form.model" name="model" required placeholder="Ej: CX-5">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Placa</label>
+              <input type="text" [(ngModel)]="form.licensePlate" name="licensePlate" required placeholder="ABC-123">
+            </div>
+            <div class="form-group">
+              <label>Año</label>
+              <input type="text" [(ngModel)]="form.year" name="year" required placeholder="2024">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Capacidad Tanque (Galones)</label>
+            <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>
+          </div>
+
+          <div class="form-group">
+            <label>Rendimiento Promedio (Km/Galón)</label>
+            <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn-primary">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

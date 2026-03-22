@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Serene Drive Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#525464",
+              "error": "#a83836",
+              "on-primary": "#e5fff2",
+              "outline": "#797b78",
+              "surface": "#faf9f6",
+              "inverse-surface": "#0d0f0d",
+              "on-error-container": "#6e0a12",
+              "surface-tint": "#006c53",
+              "on-secondary-container": "#3c5180",
+              "on-primary-fixed": "#004936",
+              "on-primary-container": "#005d47",
+              "error-container": "#fa746f",
+              "on-primary-fixed-variant": "#00684f",
+              "surface-container-highest": "#e1e3de",
+              "surface-container-high": "#e7e9e4",
+              "surface-container-low": "#f4f4f0",
+              "primary-fixed-dim": "#81e7c3",
+              "on-secondary-fixed": "#283e6c",
+              "tertiary-dim": "#505262",
+              "surface-bright": "#faf9f6",
+              "secondary": "#495e8e",
+              "on-surface-variant": "#5d605c",
+              "surface-dim": "#d9dbd6",
+              "secondary-dim": "#3d5282",
+              "primary": "#006c53",
+              "on-error": "#fff7f6",
+              "on-tertiary": "#faf8ff",
+              "on-tertiary-fixed": "#404251",
+              "on-surface": "#303330",
+              "tertiary-container": "#e6e6fa",
+              "surface-container": "#eeeeea",
+              "surface-variant": "#e1e3de",
+              "background": "#faf9f6",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed-dim": "#d8d8ec",
+              "secondary-fixed-dim": "#c4d4ff",
+              "tertiary": "#5c5e6e",
+              "primary-fixed": "#8ff6d0",
+              "primary-dim": "#005f48",
+              "on-secondary": "#f9f8ff",
+              "on-background": "#303330",
+              "secondary-container": "#d9e2ff",
+              "outline-variant": "#b0b3ae",
+              "surface-container-lowest": "#ffffff",
+              "error-dim": "#67040d",
+              "tertiary-fixed": "#e6e6fa",
+              "secondary-fixed": "#d9e2ff",
+              "inverse-primary": "#98ffd9",
+              "on-tertiary-fixed-variant": "#5c5e6e",
+              "on-secondary-fixed-variant": "#465b8b",
+              "primary-container": "#8ff6d0"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        line-height: 1;
+      }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .range-knob-gradient {
+        background: conic-gradient(from 180deg, #006c53 0%, #8ff6d0 75%, transparent 75%);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container min-h-screen pb-32 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#faf9f6]/70 backdrop-blur-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#006c53]" data-icon="menu">menu</span>
+<h1 class="text-xl font-bold text-[#006c53] tracking-tight font-headline">Serene Drive</h1>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile avatar" data-alt="Minimalist circular user profile placeholder icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTjzjdKMjy96rjWE97014DuOddgYyXaiJRhxN2XSs9zR_yLSoPxHHqryY4O6Am5BDzL6lBtdkRN8TVAysfDLK9R2czWv3SnX6fjgQRg51p7V9GFjTsHoZuHxn_2CfAdBW4osO2hJl8w7E-qLY4VCylqhUtvWruwfeQZLuC74QekzHH114eMhSzjxorPk8YvxQLYV3QeIXZqdoiqljljKaknh9QdQqme62wEFXnlxnkX8XqGVNnEqOQPeBI6Yl2LVES_rnbQwvGAg"/>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-md mx-auto space-y-8">
+<!-- Hero: Welcome & Proactive Action -->
+<section class="space-y-2">
+<h2 class="text-3xl font-extrabold font-headline tracking-tight text-on-surface">Hello, Julian</h2>
+<p class="text-on-surface-variant text-base leading-relaxed">Your journey is optimized for tranquility today.</p>
+</section>
+<!-- P-Knob Style Fuel Level & Range Card -->
+<div class="bg-surface-container-low rounded-[0.5rem] p-6 flex items-center justify-between relative overflow-hidden">
+<div class="space-y-1 z-10">
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Current Range</p>
+<p class="text-4xl font-bold font-headline text-on-surface">420<span class="text-lg font-medium ml-1">km</span></p>
+<div class="flex items-center gap-2 mt-4 text-primary font-semibold">
+<span class="material-symbols-outlined text-sm" data-icon="leaf">eco</span>
+<span class="text-xs">Optimal Efficiency</span>
+</div>
+</div>
+<div class="relative w-32 h-32 flex items-center justify-center">
+<!-- Circular Knob Representation -->
+<div class="absolute inset-0 rounded-full border-[10px] border-surface-container-highest"></div>
+<div class="absolute inset-0 rounded-full border-[10px] border-transparent range-knob-gradient transform rotate-[135deg]"></div>
+<div class="z-10 text-center">
+<span class="text-2xl font-bold block">75%</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">Full</span>
+</div>
+</div>
+</div>
+<!-- Quick Action: Start Journey -->
+<button class="w-full bg-gradient-to-br from-[#006c53] to-[#8ff6d0] text-white rounded-full py-5 px-8 font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-primary/10 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+            Start Serene Journey
+        </button>
+<!-- Efficiency Bento Grid Section -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Efficiency Chart Card -->
+<div class="col-span-2 bg-surface-container-lowest rounded-[0.5rem] p-6 space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-lg">Efficiency Trend</h3>
+<p class="text-xs text-on-surface-variant">Last 7 drives</p>
+</div>
+<div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-xs font-bold">
+                        +12%
+                    </div>
+</div>
+<!-- P-Chart Style Placeholder -->
+<div class="h-32 w-full flex items-end gap-2 pt-4">
+<div class="flex-1 bg-surface-container-high rounded-t-sm h-[40%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm h-[55%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm h-[45%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm h-[70%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm h-[65%]"></div>
+<div class="flex-1 bg-primary-container rounded-t-sm h-[85%]"></div>
+<div class="flex-1 bg-primary rounded-t-sm h-[95%]"></div>
+</div>
+</div>
+<!-- Smaller Stat Cards -->
+<div class="bg-secondary-container/30 rounded-[0.5rem] p-5 space-y-2">
+<span class="material-symbols-outlined text-secondary" data-icon="timer">timer</span>
+<p class="text-xs font-medium text-on-secondary-container">Drive Time</p>
+<p class="text-xl font-bold">12.4h</p>
+</div>
+<div class="bg-tertiary-container/30 rounded-[0.5rem] p-5 space-y-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="cloud">cloud</span>
+<p class="text-xs font-medium text-on-tertiary-container">Air Quality</p>
+<p class="text-xl font-bold">Pure</p>
+</div>
+</div>
+<!-- Proactive Navigation Suggestion -->
+<div class="bg-surface-container rounded-[0.5rem] p-6 space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="psychology">psychology</span>
+</div>
+<div>
+<h4 class="font-bold text-sm">Smart Suggestion</h4>
+<p class="text-xs text-on-surface-variant">Avoiding heavy traffic on I-95</p>
+</div>
+</div>
+<div class="relative w-full h-32 rounded-lg overflow-hidden">
+<img alt="Map preview" class="w-full h-full object-cover grayscale opacity-50" data-alt="Abstract soft aerial map of a coastal city with clean lines" data-location="Seattle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPtzekR2Uz9HHgunKjzM37bknR1UXFv5nGoMY67GQBTtz22qFFRB1r1lhcG3voYzy-tbJAKs8pCuHlUj_Aqo8-388z1bdKB-3DSBKvaseCKpdcYhUB07tWGfibRE2zoSzbiL77Miqpcy_lbyTp9vCJnX8aFsiQrHCKYy1eKFeM_2rmSogB1XCaUFERFyT1fLVEZSirTrw19B7Nf3eAY3bH3H8UYl3xN4XjAjYL731g1eSy1LSyAqDJR3ubbyp8aP9EQX0UNHEL4A"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="bg-white/90 backdrop-blur-sm text-on-surface px-4 py-2 rounded-full text-xs font-bold shadow-sm">View Alternative Route</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-4 bg-[#faf9f6]/70 backdrop-blur-xl rounded-t-[3rem] shadow-[0px_-4px_40px_0px_rgba(48,51,48,0.06)]">
+<!-- Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#006c53] to-[#8ff6d0] text-white rounded-full px-6 py-2 tap-highlight-none scale-90 duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-medium mt-0.5">Dashboard</span>
+</a>
+<!-- Navigate -->
+<a class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[10px] font-medium mt-0.5">Navigate</span>
+</a>
+<!-- History -->
+<a class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="local_gas_station">local_gas_station</span>
+<span class="text-[10px] font-medium mt-0.5">History</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-medium mt-0.5">Settings</span>
+</a>
+</nav>
+</body></html>

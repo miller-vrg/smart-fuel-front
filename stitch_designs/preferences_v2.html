@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Preferences - Serene Drive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#525464",
+              "error": "#a83836",
+              "on-primary": "#e5fff2",
+              "outline": "#797b78",
+              "surface": "#faf9f6",
+              "inverse-surface": "#0d0f0d",
+              "on-error-container": "#6e0a12",
+              "surface-tint": "#006c53",
+              "on-secondary-container": "#3c5180",
+              "on-primary-fixed": "#004936",
+              "on-primary-container": "#005d47",
+              "error-container": "#fa746f",
+              "on-primary-fixed-variant": "#00684f",
+              "surface-container-highest": "#e1e3de",
+              "surface-container-high": "#e7e9e4",
+              "surface-container-low": "#f4f4f0",
+              "primary-fixed-dim": "#81e7c3",
+              "on-secondary-fixed": "#283e6c",
+              "tertiary-dim": "#505262",
+              "surface-bright": "#faf9f6",
+              "secondary": "#495e8e",
+              "on-surface-variant": "#5d605c",
+              "surface-dim": "#d9dbd6",
+              "secondary-dim": "#3d5282",
+              "primary": "#006c53",
+              "on-error": "#fff7f6",
+              "on-tertiary": "#faf8ff",
+              "on-tertiary-fixed": "#404251",
+              "on-surface": "#303330",
+              "tertiary-container": "#e6e6fa",
+              "surface-container": "#eeeeea",
+              "surface-variant": "#e1e3de",
+              "background": "#faf9f6",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed-dim": "#d8d8ec",
+              "secondary-fixed-dim": "#c4d4ff",
+              "tertiary": "#5c5e6e",
+              "primary-fixed": "#8ff6d0",
+              "primary-dim": "#005f48",
+              "on-secondary": "#f9f8ff",
+              "on-background": "#303330",
+              "secondary-container": "#d9e2ff",
+              "outline-variant": "#b0b3ae",
+              "surface-container-lowest": "#ffffff",
+              "error-dim": "#67040d",
+              "tertiary-fixed": "#e6e6fa",
+              "secondary-fixed": "#d9e2ff",
+              "inverse-primary": "#98ffd9",
+              "on-tertiary-fixed-variant": "#5c5e6e",
+              "on-secondary-fixed-variant": "#465b8b",
+              "primary-container": "#8ff6d0"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "8px", "lg": "8px", "xl": "8px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#faf9f6]/70 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer" data-icon="menu">menu</span>
+<h1 class="text-xl font-bold text-[#006c53] tracking-tight font-headline">Serene Drive</h1>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Minimalist user profile avatar icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMfdW3uXz1-MycK1X9TZJQlmcU623Vvwm8mj4LnYUyBwsutqU-yDfPLB-SOD1rfla-JDsQvTbvZRD42dukRnT7YX1V6FpdW9f7L_Pm8hHGJUM_bNNE9U17VCEfDYHe663AlufWhEzBfR0igU0GC0z_WeyHgPCd2cJCtOhz1coxwTygZroGvNBT2Uy49LUY9kLhzawnL1OTKb9uhWUyjuHsSnQQGkz1MW0YsAjw_nYhymQUnXfFytRo-A2_d138j2Kqt0d1AE-rgw"/>
+</div>
+</header>
+<main class="pt-24 px-6 space-y-10 max-w-lg mx-auto">
+<!-- Hero Section / Context -->
+<section class="space-y-2">
+<h2 class="text-3xl font-extrabold font-headline tracking-tight text-primary">Preferences</h2>
+<p class="text-on-surface-variant text-md leading-relaxed">Customize your proactive navigation nodes and vehicle behaviors for a tranquil journey.</p>
+</section>
+<!-- Bento Grid: Automation & Climate -->
+<section class="grid grid-cols-1 gap-4">
+<!-- Toggle Card 1 -->
+<div class="bg-surface-container-low p-6 flex items-center justify-between rounded-lg">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined" data-icon="local_parking">local_parking</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Auto-Park Assist</p>
+<p class="text-xs text-on-surface-variant">Intelligent spot finding</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Card 2 -->
+<div class="bg-surface-container-low p-6 flex items-center justify-between rounded-lg">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" data-icon="thermostat">thermostat</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Predictive Climate</p>
+<p class="text-xs text-on-surface-variant">Adjusts via route weather</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</section>
+<!-- Refueling Priority List -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold font-headline text-on-surface">Refueling Priority</h3>
+<span class="text-xs font-medium text-primary uppercase tracking-wider">Drag to reorder</span>
+</div>
+<div class="space-y-3">
+<!-- Priority Item 1 -->
+<div class="flex items-center gap-4 bg-surface-container p-4 rounded-lg group hover:bg-surface-container-high transition-colors">
+<div class="text-on-surface-variant flex flex-col gap-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="w-10 h-10 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-sm">
+<span class="text-primary font-bold">1</span>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-on-surface">Terpel</p>
+<p class="text-xs text-on-surface-variant">Preferred fueling partner</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<!-- Priority Item 2 -->
+<div class="flex items-center gap-4 bg-surface-container p-4 rounded-lg group hover:bg-surface-container-high transition-colors">
+<div class="text-on-surface-variant flex flex-col gap-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="w-10 h-10 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-sm">
+<span class="text-primary font-bold">2</span>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-on-surface">Primax</p>
+<p class="text-xs text-on-surface-variant">Secondary choice</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="star">star</span>
+</div>
+<!-- Priority Item 3 -->
+<div class="flex items-center gap-4 bg-surface-container p-4 rounded-lg group hover:bg-surface-container-high transition-colors">
+<div class="text-on-surface-variant flex flex-col gap-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="w-10 h-10 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-sm">
+<span class="text-primary font-bold">3</span>
+</div>
+<div class="flex-grow">
+<p class="font-semibold text-on-surface">Texaco</p>
+<p class="text-xs text-on-surface-variant">Backup option</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="star">star</span>
+</div>
+</div>
+</section>
+<!-- Additional Preferences Visual -->
+<section class="bg-gradient-to-br from-tertiary-container to-secondary-container p-8 rounded-xl space-y-4">
+<h4 class="text-on-tertiary-container font-bold font-headline leading-tight">Serene Suggestions</h4>
+<p class="text-on-tertiary-container text-sm opacity-80">We use these preferences to suggest stops that match your brand loyalty and comfort needs.</p>
+<button class="bg-primary text-white px-6 py-3 rounded-full font-semibold text-sm shadow-lg hover:scale-95 transition-transform">Save Configuration</button>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-4 bg-[#faf9f6]/70 backdrop-blur-xl shadow-[0px_-4px_40px_0px_rgba(48,51,48,0.06)] rounded-t-[3rem]">
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[0.875rem] font-medium font-label mt-1">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[0.875rem] font-medium font-label mt-1">Navigate</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5d605c] px-6 py-2 hover:text-[#006c53] transition-all">
+<span class="material-symbols-outlined" data-icon="local_gas_station">local_gas_station</span>
+<span class="text-[0.875rem] font-medium font-label mt-1">History</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-[#006c53] to-[#8ff6d0] text-white rounded-full px-6 py-2 scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[0.875rem] font-medium font-label mt-1">Settings</span>
+</div>
+</nav>
+</body></html>
