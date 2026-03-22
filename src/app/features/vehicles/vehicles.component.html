@@ -100,6 +100,15 @@
             <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
           </div>
 
+          <div class="form-group">
+            <label>Reserva de Seguridad: {{ (form.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</label>
+            <input type="range" [(ngModel)]="form.safetyBuffer" name="safetyBuffer" min="0.10" max="0.25" step="0.01" style="width:100%; height:4px; accent-color:var(--primary);">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px; color:var(--on-surface-variant);">
+               <span>10% (Min)</span>
+               <span>25% (Max)</span>
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
             <button type="submit" class="btn-primary">Guardar Cambios</button>

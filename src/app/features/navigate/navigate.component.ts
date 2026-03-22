@@ -89,7 +89,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
     year: new Date().getFullYear().toString(),
     fuelCapacityGallons: undefined,
     avgKmPerGallon: undefined,
-    currentFuelGallons: undefined
+    currentFuelGallons: undefined,
+    safetyBuffer: 0.15
   };
 
   // Store exact polyline array to plot markers ON the route
