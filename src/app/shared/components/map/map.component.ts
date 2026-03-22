@@ -48,7 +48,31 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.map = new maplibregl.Map({
       container: this.mapContainer.nativeElement,
-      style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+      style: {
+        version: 8,
+        sources: {
+          'carto-voyager': {
+            type: 'raster',
+            tiles: [
+              'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+            ],
+            tileSize: 256,
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+          }
+        },
+        layers: [
+          {
+            id: 'carto-layer',
+            type: 'raster',
+            source: 'carto-voyager',
+            minzoom: 0,
+            maxzoom: 20
+          }
+        ]
+      },
       center: this.center,
       zoom: this.zoom,
       attributionControl: false,
