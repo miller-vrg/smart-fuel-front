@@ -53,6 +53,10 @@ export class MapService {
     this.mapComp()?.clearRouteAndMarkers();
   }
 
+  clearStopMarkers() {
+    this.mapComp()?.clearStopMarkers();
+  }
+
   drawRoute(coordinates: number[][]) {
     this.mapComp()?.drawRoute(coordinates);
   }

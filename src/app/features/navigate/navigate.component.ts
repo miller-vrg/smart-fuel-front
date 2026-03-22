@@ -470,6 +470,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
     });
   }
 
+  startWithoutVehicle(): void {
+    this.showVehicleSelector = false;
+    this.activeVehicle = null;
+    this.isAutonomyCritical = false;
+    this.mapService.clearStopMarkers(); // Limpiar marcadores de paradas previas si existen
+    this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
+    this.executeTripLogic();
+  }
+
   // ─── Vehicle Management ────────────────────────
   
   openAddVehicleForm(): void {
@@ -505,7 +514,13 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private evaluateTripRules(): void {
-    if (!this.destination || !this.activeVehicle || !this.userPreferences || !this.routeDistance) {
+    if (!this.destination || !this.routeDistance) {
+      this.isAutonomyCritical = false;
+      return;
+    }
+
+    // Si no hay vehículo, no evaluamos autonomía ni paradas de combustible
+    if (!this.activeVehicle || !this.userPreferences) {
       this.isAutonomyCritical = false;
       return;
     }

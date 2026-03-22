@@ -227,8 +227,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       this.destMarker.remove();
       this.destMarker = null;
     }
-    this.smartStopMarkers.forEach(m => m.remove());
-    this.smartStopMarkers = [];
+    this.clearStopMarkers();
     
     if (this.map?.getSource('route-source')) {
       (this.map.getSource('route-source') as any).setData({
@@ -237,6 +236,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         geometry: { type: 'LineString', coordinates: [] }
       });
     }
+  }
+
+  clearStopMarkers(): void {
+    this.smartStopMarkers.forEach(m => m.remove());
+    this.smartStopMarkers = [];
   }
 
   /**
