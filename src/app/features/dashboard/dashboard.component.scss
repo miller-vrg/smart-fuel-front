@@ -134,9 +134,11 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    border: 10px solid transparent;
     transform: rotate(135deg);
     transition: all 1s ease;
+    /* Mask out the middle to create a clean ring */
+    -webkit-mask: radial-gradient(transparent 52px, #000 53px);
+    mask: radial-gradient(transparent 52px, #000 53px);
   }
 
   &__center {

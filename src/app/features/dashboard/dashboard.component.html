@@ -32,13 +32,13 @@
             <span>Optimal Efficiency</span>
           </div>
         </div>
-        <div class="relative w-32 h-32 flex items-center justify-center">
-          <div class="absolute inset-0 rounded-full border-[10px] border-surface-container-highest"></div>
-          <div class="absolute inset-0 rounded-full border-[10px] border-transparent range-knob-gradient transform rotate-[135deg]"
+        <div class="fuel-knob">
+          <div class="fuel-knob__track"></div>
+          <div class="fuel-knob__fill"
                [style.background]="'conic-gradient(from 180deg, var(--primary) 0%, var(--primary-fixed) ' + data.range.fuelLevelPercent + '%, transparent ' + data.range.fuelLevelPercent + '%) border-box'"></div>
-          <div class="z-10 text-center">
-            <span class="text-2xl font-bold block">{{ data.range.fuelLevelPercent | number:'1.0-0' }}%</span>
-            <span class="text-[10px] uppercase font-bold text-on-surface-variant">Full</span>
+          <div class="fuel-knob__center">
+            <span class="fuel-knob__value">{{ data.range.fuelLevelPercent | number:'1.0-0' }}%</span>
+            <span class="fuel-knob__label">Full</span>
           </div>
         </div>
       </div>
