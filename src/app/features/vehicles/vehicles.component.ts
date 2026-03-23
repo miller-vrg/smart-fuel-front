@@ -143,8 +143,18 @@ export class VehiclesComponent implements OnInit {
     if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons = this.round(dataToSave.currentFuelGallons);
     if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon);
 
-    // Remove ID from payload for PATCH
-    const { id, ...cleanData } = dataToSave as any;
+    // Remove ID and other read-only or extra fields from payload for PATCH/POST
+    const { 
+      id, 
+      notifyGasStationKmBefore, 
+      notifyRestStopHours, 
+      maxSpeedLimit, 
+      activeTrip, 
+      createdAt, 
+      updatedAt,
+      userId,
+      ...cleanData 
+    } = dataToSave as any;
 
     const request = (this.editingVehicle && this.editingVehicle.id)
       ? this.vehicleService.updateVehicle(this.editingVehicle.id, cleanData)

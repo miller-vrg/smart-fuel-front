@@ -144,6 +144,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.mapService.mapClick.subscribe(event => {
       this.onMapClick(event);
     });
+
+    // Handle "Add Stop" from popups
+    window.addEventListener('map:setWay', (e: any) => {
+      if (e.detail && e.detail.lng && e.detail.lat) {
+        // For now, since we only support A->B, we set the stop as the new destination
+        // but we keep the original destination in mind if needed.
+        // Or simply recalculate route to this new point.
+        this.onMapClick(e.detail, true);
+      }
+    });
   }
 
   ngOnDestroy(): void {
