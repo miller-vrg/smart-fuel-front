@@ -17,15 +17,31 @@
         Cargando vehículos...
       </div>
     } @else {
-      <div class="vehicle-list">
+      <div class="vehicle-grid">
         @for(v of (vehicles$ | async); track v.id) {
-          <div class="vehicle-item">
-            <div class="vehicle-item__info">
-              <h3 class="vehicle-item__title">{{ v.brand }} {{ v.model }}</h3>
-              <p class="vehicle-item__plate">{{ v.licensePlate }} • {{ v.year }}</p>
+          <div class="vehicle-card" [class.vehicle-card--main]="v.isMain">
+            <div class="vehicle-card__header">
+              <div class="vehicle-card__info">
+                <h3 class="vehicle-card__title">
+                  {{ v.brand }} {{ v.model }}
+                  @if(v.isMain) {
+                    <span class="main-badge">Principal</span>
+                  }
+                </h3>
+                <p class="vehicle-card__plate">{{ v.licensePlate }} • {{ v.year }}</p>
+              </div>
+
+              <div class="vehicle-card__actions">
+                <button class="action-btn" (click)="openEditModal(v)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="action-btn action-btn--danger" (click)="deleteVehicle(v.id)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
             </div>
-            
-            <div class="vehicle-item__stats">
+
+            <div class="vehicle-card__stats">
               <div class="mini-stat">
                 <span class="mini-stat__val">{{ v.fuelCapacityGallons }}</span>
                 <span class="mini-stat__label">Gal</span>
@@ -34,15 +50,6 @@
                 <span class="mini-stat__val">{{ v.avgKmPerGallon }}</span>
                 <span class="mini-stat__label">Km/Gal</span>
               </div>
-            </div>
-
-            <div class="vehicle-item__actions">
-              <button class="action-btn" (click)="openEditModal(v)">
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-              <button class="action-btn action-btn--danger" (click)="deleteVehicle(v.id)">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
             </div>
           </div>
         } @empty {
@@ -61,7 +68,7 @@
     <div class="modal-backdrop" (click)="closeModal()">
       <div class="modal-sheet" (click)="$event.stopPropagation()">
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
-        
+
         <form class="vehicle-form" (submit)="saveVehicle()" *ngIf="!showSuccess()">
           <div class="modal-body form-scroll-container">
             <div class="form-group">
