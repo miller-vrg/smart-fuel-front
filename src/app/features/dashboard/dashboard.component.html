@@ -1,7 +1,7 @@
 <div class="dashboard" *ngIf="{ range: range$ | async, vehicle: vehicle$ | async } as data">
   <!-- Hero: Welcome -->
   <section class="hero">
-    <h2 class="hero__title">Hello, {{ userName }}</h2>
+    <h2 class="hero__title">Hello, {{ userName() }}</h2>
     <p class="hero__subtitle" *ngIf="data.vehicle">Your {{ data.vehicle.brand }} {{ data.vehicle.model }} is optimized for tranquility today.</p>
   </section>
 

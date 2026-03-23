@@ -81,6 +81,27 @@
     </div>
   </section>
 
+  <!-- User Profile Section -->
+  <section class="priority-section" style="margin-top: 24px;">
+    <div class="priority-section__header">
+      <h3 class="priority-section__title">User Profile</h3>
+      <span class="priority-section__hint">Personalize your info</span>
+    </div>
+
+    <div class="priority-list" style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #a0aec0;">DISPLAY NAME</label>
+        <input type="text" [(ngModel)]="displayName" placeholder="Enter your name" 
+               style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; display: block;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #a0aec0;">EMAIL ADDRESS (Read-only)</label>
+        <input type="text" [value]="userEmail" disabled 
+               style="width: 100%; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #718096; display: block;">
+      </div>
+    </div>
+  </section>
+
   <!-- Navigation Preferences -->
   <section class="priority-section" style="margin-top: 24px;">
     <div class="priority-section__header">

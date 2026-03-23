@@ -7,6 +7,8 @@ import { Observable, EMPTY, of } from 'rxjs';
 import { VehicleService } from '@core/services/vehicle.service';
 import { FuelService } from '@core/services/fuel.service';
 import { Vehicle } from '@/app/core/interfaces/vehicle.interface';
+import { AuthService } from '@core/services/auth.service';
+import { computed } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,8 +21,9 @@ import { Vehicle } from '@/app/core/interfaces/vehicle.interface';
 export class DashboardComponent implements OnInit {
   vehicleService = inject(VehicleService);
   fuelService = inject(FuelService);
+  authService = inject(AuthService);
 
-  readonly userName = 'Julian';
+  readonly userName = computed(() => this.authService.currentUser()?.name || 'User');
   
   // Use signals or Observables for data binding
   range$!: Observable<any>;

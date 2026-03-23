@@ -5,6 +5,7 @@ import { BehaviorSubject, switchMap, EMPTY, take } from 'rxjs';
 
 import { PreferencesService } from '@core/services/preferences.service';
 import { VehicleService } from '@core/services/vehicle.service';
+import { AuthService } from '@core/services/auth.service';
 import { Preference } from '@core/interfaces/preference.interface';
 
 import { ToggleSetting, FuelPriority } from './preferences.interfaces';
@@ -20,9 +21,13 @@ import { ToggleSetting, FuelPriority } from './preferences.interfaces';
 export class PreferencesComponent implements OnInit {
   prefService = inject(PreferencesService);
   vehicleService = inject(VehicleService);
+  authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
   pref$ = new BehaviorSubject<Preference | null>(null);
+  
+  displayName = '';
+  userEmail = '';
 
   toggleSettings: ToggleSetting[] = [
     {
@@ -57,6 +62,12 @@ export class PreferencesComponent implements OnInit {
   maxSpeedLimit: number = 100;
 
   ngOnInit() {
+    const user = this.authService.currentUser();
+    if (user) {
+      this.displayName = user.name;
+      this.userEmail = user.email;
+    }
+
     this.vehicleService.loadInitialVehicle().pipe(
       switchMap(v => (v && v.length > 0) ? this.prefService.getByVehicle(v[0].id) : EMPTY)
     ).subscribe(pref => {
@@ -151,6 +162,10 @@ export class PreferencesComponent implements OnInit {
     this.prefService.updatePreferences(updatedPref).subscribe({
       next: (res) => {
         this.pref$.next(res);
+        // Update local profile name if changed
+        if (this.displayName.trim()) {
+           this.authService.updateLocalProfile(this.displayName.trim());
+        }
         this.cdr.markForCheck();
         alert('Preferencias guardadas exitosamente!');
       },

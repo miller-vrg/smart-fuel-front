@@ -5,6 +5,7 @@ import { NotificationsService } from '../core/services/notifications.service';
 import { NotificationCardComponent } from '../shared/components/notification-card/notification-card.component';
 import { MapComponent } from '../shared/components/map/map.component';
 import { MapService } from '../core/services/map.service';
+import { AuthService } from '../core/services/auth.service';
 
 interface NavItem {
   path: string;
@@ -24,6 +25,7 @@ export class LayoutComponent {
   private router = inject(Router);
   public notifService = inject(NotificationsService);
   private mapService = inject(MapService);
+  public authService = inject(AuthService);
   public showMenu = false;
 
   readonly navItems: NavItem[] = [
