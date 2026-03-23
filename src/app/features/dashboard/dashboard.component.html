@@ -2,7 +2,17 @@
   <div class="dashboard">
     <!-- Hero: Welcome -->
     <section class="hero">
-      <h2 class="hero__title">Hello, {{ userName() }}</h2>
+      <div class="hero__header">
+        <h2 class="hero__title">Hello, {{ userName() }}</h2>
+        <div class="vehicle-selector" *ngIf="allVehicles$ | async as vehicles">
+          <span class="material-symbols-outlined">directions_car</span>
+          <select [ngModel]="data.vehicle?.id" (ngModelChange)="changeVehicle($event)">
+            <option *ngFor="let v of vehicles" [value]="v.id">
+              {{ v.brand }} {{ v.model }}
+            </option>
+          </select>
+        </div>
+      </div>
       @if (data.vehicle) {
         <p class="hero__subtitle">Your {{ data.vehicle.brand }} {{ data.vehicle.model }} is optimized for tranquility today.</p>
       }

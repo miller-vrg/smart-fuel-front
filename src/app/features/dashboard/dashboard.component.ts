@@ -1,22 +1,19 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { switchMap, catchError, map } from 'rxjs/operators';
-import { Observable, EMPTY, of } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { switchMap, catchError, first } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
 import { VehicleService } from '@core/services/vehicle.service';
 import { FuelService } from '@core/services/fuel.service';
-import { Vehicle } from '@/app/core/interfaces/vehicle.interface';
+import { Vehicle } from '@core/interfaces/vehicle.interface';
 import { AuthService } from '@core/services/auth.service';
-import { computed } from '@angular/core';
-
-import { DashboardComponent as DashboardComp } from './dashboard.component'; // just a placeholder for the component itself if needed
 import { FuelRefillComponent } from '../fuel/fuel-refill.component';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, FuelRefillComponent],
+    imports: [CommonModule, FormsModule, FuelRefillComponent],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,9 +27,9 @@ export class DashboardComponent implements OnInit {
 
   readonly userName = computed(() => this.authService.currentUser()?.name || 'User');
   
-  // Use signals or Observables for data binding
+  allVehicles$!: Observable<Vehicle[]>;
   range$!: Observable<any>;
-  vehicle$!: Observable<Vehicle>;
+  vehicle$!: Observable<Vehicle | null>;
 
   readonly efficiencyData = [
     { day: 'Mon', height: 40 },
@@ -45,12 +42,12 @@ export class DashboardComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.vehicle$ = this.vehicleService.loadInitialVehicle().pipe(
-        map((v: Vehicle[]) => v[0])
-    );
+    this.allVehicles$ = this.vehicleService.loadInitialVehicle();
+    this.vehicle$ = this.vehicleService.activeVehicle$;
+    
     this.range$ = this.vehicle$.pipe(
       switchMap(v => {
-        if (!v || !v.id) return EMPTY;
+        if (!v || !v.id) return of({ safeRangeKm: 0, fuelLevelPercent: 0, status: 'UNKNOWN' });
         return this.fuelService.getRange(v.id);
       }),
       catchError(err => {
@@ -58,5 +55,12 @@ export class DashboardComponent implements OnInit {
         return of({ safeRangeKm: 0, fuelLevelPercent: 0, status: 'WARNING' });
       })
     );
+  }
+
+  changeVehicle(id: string) {
+    this.allVehicles$.pipe(first()).subscribe(vehicles => {
+      const v = vehicles.find(x => x.id === id);
+      if (v) this.vehicleService.setActiveVehicle(v);
+    });
   }
 }

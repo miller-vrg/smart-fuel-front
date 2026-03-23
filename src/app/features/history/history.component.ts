@@ -34,12 +34,14 @@ export class HistoryComponent implements OnInit {
   ];
 
   ngOnInit() {
-    const vehicle$ = this.vehicleService.loadInitialVehicle();
-    this.summary$ = vehicle$.pipe(
-      switchMap(v => (v && v.length > 0) ? this.fuelService.getConsumptionSummary(v[0].id) : EMPTY)
+    this.summary$ = this.vehicleService.activeVehicle$.pipe(
+      switchMap(v => v ? this.fuelService.getConsumptionSummary(v.id) : EMPTY)
     );
-    this.logs$ = vehicle$.pipe(
-      switchMap(v => (v && v.length > 0) ? this.fuelService.getHistory(v[0].id) : EMPTY)
+    this.logs$ = this.vehicleService.activeVehicle$.pipe(
+      switchMap(v => v ? this.fuelService.getHistory(v.id) : EMPTY)
     );
+    
+    // Ensure vehicles are loaded if they haven't been
+    this.vehicleService.loadInitialVehicle().subscribe();
   }
 }

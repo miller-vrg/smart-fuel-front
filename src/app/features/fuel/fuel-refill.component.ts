@@ -232,8 +232,14 @@ export class FuelRefillComponent {
   constructor() {
     this.vehicleService.loadInitialVehicle().pipe(take(1)).subscribe(vs => {
       this.vehicles = vs;
-      const main = vs.find(v => v.isMain);
-      if (main) this.selectedVehicleId = main.id;
+      // Default to the globally selected vehicle
+      const activeId = this.vehicleService.getActiveVehicleId();
+      if (activeId) {
+        this.selectedVehicleId = activeId;
+      } else {
+        const main = vs.find(v => v.isMain);
+        if (main) this.selectedVehicleId = main.id;
+      }
     });
   }
 
@@ -244,18 +250,14 @@ export class FuelRefillComponent {
   currentFuelInUnits() {
     const v = this.selectedVehicle();
     if (!v) return 0;
-    return this.unit() === 'liters' 
+    const val = this.unit() === 'liters' 
       ? v.currentFuelGallons * this.GAL_TO_L 
       : v.currentFuelGallons;
+    return Math.round(val * 100) / 100;
   }
 
   setUnit(u: 'liters' | 'gallons') {
     this.unit.set(u);
-  }
-
-  onInputChange() {
-    // This triggers angular change detection due to ngModel-signal interaction if needed
-    // In this case, computed() handles it.
   }
 
   close() {
@@ -269,13 +271,13 @@ export class FuelRefillComponent {
     const v = this.selectedVehicle()!;
     
     // Convert to gallons for backend
-    const addedGallons = this.unit() === 'liters' 
+    let addedGallons = this.unit() === 'liters' 
       ? amountInSelectedUnit / this.GAL_TO_L 
       : amountInSelectedUnit;
 
-    const newFuel = (v.currentFuelGallons || 0) + addedGallons;
-    
-    this.vehicleService.updateVehicle(v.id, { currentFuelGallons: newFuel }).subscribe(() => {
+    addedGallons = Math.round(addedGallons * 100) / 100;
+
+    this.vehicleService.refill(v.id, addedGallons, v.currentFuelGallons || 0).subscribe(() => {
         this.close();
         window.location.reload(); 
     });

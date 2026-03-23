@@ -17,10 +17,20 @@ export class VehicleService {
     return this.api.get<Vehicle[]>('/vehicles').pipe(
       tap(vehicles => {
         if (vehicles && vehicles.length > 0) {
-          this.activeVehicleSubject.next(vehicles[0]);
+          const storedId = localStorage.getItem('selectedVehicleId');
+          const saved = vehicles.find(v => v.id === storedId);
+          const main = vehicles.find(v => v.isMain);
+          
+          const selected = saved || main || vehicles[0];
+          this.activeVehicleSubject.next(selected);
         }
       })
     );
+  }
+
+  setActiveVehicle(vehicle: Vehicle) {
+    localStorage.setItem('selectedVehicleId', vehicle.id);
+    this.activeVehicleSubject.next(vehicle);
   }
 
   getActiveVehicleId(): string | null {
@@ -45,5 +55,10 @@ export class VehicleService {
 
   getVehicleById(id: string): Observable<Vehicle> {
     return this.api.get<Vehicle>(`/vehicles/${id}`);
+  }
+
+  refill(id: string, addedGallons: number, currentFuelGallons: number): Observable<Vehicle> {
+    const newFuel = Math.round((currentFuelGallons + addedGallons) * 100) / 100;
+    return this.updateVehicle(id, { currentFuelGallons: newFuel });
   }
 }

@@ -90,13 +90,21 @@ export class VehiclesComponent implements OnInit {
       if (dataToSave.avgKmPerGallon) dataToSave.avgKmPerGallon *= this.GAL_TO_L;
     }
 
+    // Rounding to 2 decimals
+    if (dataToSave.fuelCapacityGallons) dataToSave.fuelCapacityGallons = Math.round(dataToSave.fuelCapacityGallons * 100) / 100;
+    if (dataToSave.currentFuelGallons) dataToSave.currentFuelGallons = Math.round(dataToSave.currentFuelGallons * 100) / 100;
+    if (dataToSave.avgKmPerGallon) dataToSave.avgKmPerGallon = Math.round(dataToSave.avgKmPerGallon * 100) / 100;
+
+    // Remove ID from payload for PATCH
+    const { id, ...cleanData } = dataToSave as any;
+
     if (this.editingVehicle && this.editingVehicle.id) {
-      this.vehicleService.updateVehicle(this.editingVehicle.id, dataToSave).subscribe(() => {
+      this.vehicleService.updateVehicle(this.editingVehicle.id, cleanData).subscribe(() => {
         this.closeModal();
         window.location.reload(); 
       });
     } else {
-      this.vehicleService.createVehicle(dataToSave).subscribe(() => {
+      this.vehicleService.createVehicle(cleanData).subscribe(() => {
         this.closeModal();
         window.location.reload();
       });

@@ -68,8 +68,8 @@ export class PreferencesComponent implements OnInit {
       this.userEmail = user.email;
     }
 
-    this.vehicleService.loadInitialVehicle().pipe(
-      switchMap(v => (v && v.length > 0) ? this.prefService.getByVehicle(v[0].id) : EMPTY)
+    this.vehicleService.activeVehicle$.pipe(
+      switchMap(v => v ? this.prefService.getByVehicle(v.id) : EMPTY)
     ).subscribe(pref => {
       if (pref) {
         this.pref$.next(pref);
