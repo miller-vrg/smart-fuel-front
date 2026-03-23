@@ -37,46 +37,52 @@
       <div class="search-bar__input-box">
         <span class="material-symbols-outlined search-bar__icon" (click)="clearSearch()">search</span>
         <input type="text"
-               class="search-bar__input"
-               placeholder="¿A dónde vas?"
-               [(ngModel)]="searchQuery"
-               (keyup.enter)="searchDestination()"/>
-        <button class="search-bar__clear" *ngIf="searchQuery" (click)="clearSearch()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+          class="search-bar__input"
+          placeholder="¿A dónde vas?"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchDestination()"/>
+        @if (searchQuery) {
+          <button class="search-bar__clear" (click)="clearSearch()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
       </div>
 
       <!-- Search Results Dropdown -->
-      <div class="search-results" *ngIf="searchResults.length > 0">
-        <div class="search-result-item" *ngFor="let result of searchResults" (click)="selectSearchResult(result)">
-          <span class="material-symbols-outlined">location_on</span>
-          <div class="search-result-text">
-            <p class="search-result-name">{{ result.name || result.display_name.split(',')[0] }}</p>
-            <p class="search-result-address">{{ result.display_name }}</p>
-          </div>
+      @if (searchResults.length > 0) {
+        <div class="search-results">
+          @for (result of searchResults; track result) {
+            <div class="search-result-item" (click)="selectSearchResult(result)">
+              <span class="material-symbols-outlined">location_on</span>
+              <div class="search-result-text">
+                <p class="search-result-name">{{ result.name || result.display_name.split(',')[0] }}</p>
+                <p class="search-result-address">{{ result.display_name }}</p>
+              </div>
+            </div>
+          }
         </div>
-      </div>
+      }
     </div>
   }
 
   <!-- Alternative Routes List (visible even during navigation if toggled) -->
   @if (possibleRoutes.length > 0 && showRouteList) {
     <div class="route-list" [class.route-list--active]="true">
-    <div class="route-list__brand-header">
-      <h2 class="route-list__brand-title">Smart Fuel</h2>
-      <p class="route-list__brand-subtitle">Selecciona la mejor ruta para tu viaje</p>
-    </div>
+      <div class="route-list__brand-header">
+        <h2 class="route-list__brand-title">Smart Fuel</h2>
+        <p class="route-list__brand-subtitle">Selecciona la mejor ruta para tu viaje</p>
+      </div>
 
-    <div class="route-list__header">
-      <span class="route-list__title">Rutas Sugeridas</span>
-      <button class="route-list__cancel-btn" (click)="clearSearch()">Cancelar</button>
-    </div>
+      <div class="route-list__header">
+        <span class="route-list__title">Rutas Sugeridas</span>
+        <button class="route-list__cancel-btn" (click)="clearSearch()">Cancelar</button>
+      </div>
 
-    <div class="route-list__scroll-area">
-      @for (route of possibleRoutes; track route.index) {
-          <div class="route-item" 
-               [class.route-item--selected]="selectedRouteIndex === route.index"
-               (click)="selectRouteIndex(route.index)">
+      <div class="route-list__scroll-area">
+        @for (route of possibleRoutes; track route.index) {
+          <div class="route-item"
+            [class.route-item--selected]="selectedRouteIndex === route.index"
+            (click)="selectRouteIndex(route.index)">
             <div class="route-item__main">
               <div class="route-item__summary">
                 <strong>{{ route.summary }}</strong>
@@ -104,7 +110,7 @@
       <div class="maneuver-card">
         <div class="maneuver-card__icon-box">
           <span class="material-symbols-outlined"
-                style="font-size: 1.875rem; font-variation-settings: 'FILL' 0, 'wght' 600;">
+            style="font-size: 1.875rem; font-variation-settings: 'FILL' 0, 'wght' 600;">
             {{ maneuver.icon }}
           </span>
         </div>
@@ -150,14 +156,14 @@
         <div class="arrival-bar__card" (click)="isArrivalBarCondensed = true">
           <div class="arrival-bar__col">
             <div style="display:flex; gap:8px; margin-bottom:8px;">
-               <button class="arrival-bar__inline-btn" (click)="toggleRouteList(); $event.stopPropagation()">
-                 <span class="material-symbols-outlined">route</span>
-               </button>
-               @if (isAutonomyCritical) {
-                 <div class="arrival-bar__inline-btn arrival-bar__inline-btn--alert">
-                   <span class="material-symbols-outlined">local_gas_station</span>
-                 </div>
-               }
+              <button class="arrival-bar__inline-btn" (click)="toggleRouteList(); $event.stopPropagation()">
+                <span class="material-symbols-outlined">route</span>
+              </button>
+              @if (isAutonomyCritical) {
+                <div class="arrival-bar__inline-btn arrival-bar__inline-btn--alert">
+                  <span class="material-symbols-outlined">local_gas_station</span>
+                </div>
+              }
             </div>
             <div class="arrival-bar__eta">
               <span class="arrival-bar__eta-value">{{ eta }}</span>
@@ -236,7 +242,7 @@
                 <span>{{ v.licensePlate }} • {{ v.currentFuelGallons }}/{{ v.fuelCapacityGallons }} Gal</span>
               </div>
             </div>
-          } @empty {
+            } @empty {
             <div style="text-align:center; padding:16px; color:var(--on-surface-variant); opacity:0.7; font-size:14px;">
               No tienes vehículos registrados aún. ¡Añade uno para empezar!
             </div>
@@ -255,25 +261,25 @@
       <div class="vehicle-selector-card">
         <h3>Registrar Vehículo</h3>
         <p>Detalles básicos de tu auto para estimar autonomía y descansos inteligentemente.</p>
-        
+
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px; overflow-y:auto; max-height:40vh; padding-right:8px;">
-           <input type="text" placeholder="Placa (Ej: XYZ-123)" [(ngModel)]="newVehicleForm.licensePlate" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           <input type="text" placeholder="Marca (Ej: Nissan)" [(ngModel)]="newVehicleForm.brand" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           <input type="text" placeholder="Modelo (Ej: Sentra)" [(ngModel)]="newVehicleForm.model" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           <input type="number" placeholder="Capacidad Tanque (Galones)" [(ngModel)]="newVehicleForm.fuelCapacityGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           <input type="number" placeholder="Rendimiento (Km/Gal)" [(ngModel)]="newVehicleForm.avgKmPerGallon" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           <input type="number" placeholder="Gasolina Actual (Galones)" [(ngModel)]="newVehicleForm.currentFuelGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
-           
-           <div style="padding:4px 8px;">
-             <label style="font-size:14px; color:var(--on-surface-variant); display:block; margin-bottom:4px;">Reserva de Seguridad: {{ (newVehicleForm.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</label>
-             <input type="range" [(ngModel)]="newVehicleForm.safetyBuffer" min="0.10" max="0.25" step="0.01" style="width:100%; height:8px; accent-color:var(--primary);" />
-             <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--on-surface-variant); opacity:0.8;">
-                <span>10%</span>
-                <span>25%</span>
-             </div>
-           </div>
+          <input type="text" placeholder="Placa (Ej: XYZ-123)" [(ngModel)]="newVehicleForm.licensePlate" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+          <input type="text" placeholder="Marca (Ej: Nissan)" [(ngModel)]="newVehicleForm.brand" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+          <input type="text" placeholder="Modelo (Ej: Sentra)" [(ngModel)]="newVehicleForm.model" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+          <input type="number" placeholder="Capacidad Tanque (Galones)" [(ngModel)]="newVehicleForm.fuelCapacityGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+          <input type="number" placeholder="Rendimiento (Km/Gal)" [(ngModel)]="newVehicleForm.avgKmPerGallon" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+          <input type="number" placeholder="Gasolina Actual (Galones)" [(ngModel)]="newVehicleForm.currentFuelGallons" style="padding:16px; border-radius:12px; border:1px solid #ccc; background:var(--surface-variant); width:100%; font-size:16px; outline:none;" />
+
+          <div style="padding:4px 8px;">
+            <label style="font-size:14px; color:var(--on-surface-variant); display:block; margin-bottom:4px;">Reserva de Seguridad: {{ (newVehicleForm.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</label>
+            <input type="range" [(ngModel)]="newVehicleForm.safetyBuffer" min="0.10" max="0.25" step="0.01" style="width:100%; height:8px; accent-color:var(--primary);" />
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--on-surface-variant); opacity:0.8;">
+              <span>10%</span>
+              <span>25%</span>
+            </div>
+          </div>
         </div>
-        
+
         <button class="cancel-btn" style="background:var(--primary); color:white;" (click)="saveNewVehicle()">Guardar Vehículo</button>
         <button class="cancel-btn" (click)="showAddVehicleModal = false">Cancelar</button>
       </div>

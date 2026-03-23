@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { 
   GoogleSigninButtonModule,
   SocialAuthService 
@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-login',
-    imports: [CommonModule, GoogleSigninButtonModule],
+    imports: [GoogleSigninButtonModule],
     template: `
     <div class="login-container">
       <div class="login-card">

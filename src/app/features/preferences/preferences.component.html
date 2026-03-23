@@ -20,8 +20,8 @@
         </div>
         <label class="toggle">
           <input type="checkbox"
-                 [checked]="setting.enabled"
-                 (change)="toggleSetting(i)" />
+            [checked]="setting.enabled"
+            (change)="toggleSetting(i)" />
           <span class="toggle__slider"></span>
         </label>
       </div>
@@ -36,41 +36,41 @@
     </div>
 
     <div class="priority-list">
-     @for(item of fuelPriorities; track item.name; let i = $index){
-      <div class="priority-item">
-        <div class="priority-item__drag">
-          <span class="material-symbols-outlined" style="font-size: 14px;">drag_indicator</span>
+      @for(item of fuelPriorities; track item.name; let i = $index){
+        <div class="priority-item">
+          <div class="priority-item__drag">
+            <span class="material-symbols-outlined" style="font-size: 14px;">drag_indicator</span>
+          </div>
+          <div class="priority-item__rank">
+            <span>{{ i + 1 }}</span>
+          </div>
+          <div class="priority-item__info">
+            @if (!item.isEditing) {
+              <p class="priority-item__name">{{ item.name }}</p>
+              <p class="priority-item__desc">{{ item.description }}</p>
+            }
+            @if (item.isEditing) {
+              <input type="text" [(ngModel)]="item.name" class="priority-item__edit-input" placeholder="Brand name" />
+            }
+          </div>
+
+          <div class="priority-item__actions">
+            <span class="material-symbols-outlined priority-item__action-btn"
+              (click)="toggleEdit(item)">
+              {{ item.isEditing ? 'check' : 'edit' }}
+            </span>
+            <span class="material-symbols-outlined priority-item__action-btn priority-item__action-btn--danger"
+              (click)="removeBrand(i)">
+              delete
+            </span>
+            <span class="material-symbols-outlined priority-item__star"
+              (click)="toggleStar(item)"
+              [style.cursor]="'pointer'"
+              [style.font-variation-settings]="'FILL ' + (item.starred ? '1' : '0')"
+            [class.priority-item__star--filled]="item.starred">star</span>
+          </div>
         </div>
-        <div class="priority-item__rank">
-          <span>{{ i + 1 }}</span>
-        </div>
-        <div class="priority-item__info">
-          <ng-container *ngIf="!item.isEditing">
-            <p class="priority-item__name">{{ item.name }}</p>
-            <p class="priority-item__desc">{{ item.description }}</p>
-          </ng-container>
-          <ng-container *ngIf="item.isEditing">
-            <input type="text" [(ngModel)]="item.name" class="priority-item__edit-input" placeholder="Brand name" />
-          </ng-container>
-        </div>
-        
-        <div class="priority-item__actions">
-          <span class="material-symbols-outlined priority-item__action-btn"
-                (click)="toggleEdit(item)">
-            {{ item.isEditing ? 'check' : 'edit' }}
-          </span>
-          <span class="material-symbols-outlined priority-item__action-btn priority-item__action-btn--danger"
-                (click)="removeBrand(i)">
-            delete
-          </span>
-          <span class="material-symbols-outlined priority-item__star"
-                (click)="toggleStar(item)"
-                [style.cursor]="'pointer'"
-                [style.font-variation-settings]="'FILL ' + (item.starred ? '1' : '0')"
-                [class.priority-item__star--filled]="item.starred">star</span>
-        </div>
-      </div>
-    }
+      }
     </div>
 
     <div class="priority-add">
@@ -91,13 +91,13 @@
     <div class="priority-list" style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <label style="font-size: 0.8rem; font-weight: 600; color: #a0aec0;">DISPLAY NAME</label>
-        <input type="text" [(ngModel)]="displayName" placeholder="Enter your name" 
-               style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; display: block;">
+        <input type="text" [(ngModel)]="displayName" placeholder="Enter your name"
+          style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; display: block;">
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <label style="font-size: 0.8rem; font-weight: 600; color: #a0aec0;">EMAIL ADDRESS (Read-only)</label>
-        <input type="text" [value]="userEmail" disabled 
-               style="width: 100%; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #718096; display: block;">
+        <input type="text" [value]="userEmail" disabled
+          style="width: 100%; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #718096; display: block;">
       </div>
     </div>
   </section>

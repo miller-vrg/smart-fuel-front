@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Location } from '@angular/common';
 
 import { NotificationsService } from '@core/services/notifications.service';
@@ -9,7 +9,7 @@ import { NotificationCardComponent } from '@shared/components/notification-card/
 
 @Component({
     selector: 'app-notifications',
-    imports: [CommonModule, NotificationCardComponent],
+    imports: [NotificationCardComponent],
     templateUrl: './notifications.component.html',
     styleUrls: ['./notifications.component.scss']
 })

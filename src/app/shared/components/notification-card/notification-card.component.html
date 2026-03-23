@@ -12,13 +12,15 @@
         {{ notification.timestamp | date:'shortTime' }}
       </span>
     </div>
-    
+
     <p class="notification-card__message">
       {{ notification.message }}
     </p>
 
-    <div *ngIf="notification.type === 'smart_stop'" class="notification-card__action">
-      <button class="notification-card__btn">View on Map</button>
-    </div>
+    @if (notification.type === 'smart_stop') {
+      <div class="notification-card__action">
+        <button class="notification-card__btn">View on Map</button>
+      </div>
+    }
   </div>
 </div>

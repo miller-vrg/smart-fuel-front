@@ -3,77 +3,81 @@
   <app-map class="global-map" (mapClick)="onGlobalMapClick($event)"></app-map>
 
   <header class="top-bar">
-  <div class="top-bar__left">
-    <div class="floating-icon-wrapper">
-      <button class="icon-btn" aria-label="Menu" (click)="toggleMenu()">
-        <span class="material-symbols-outlined">menu</span>
-      </button>
+    <div class="top-bar__left">
+      <div class="floating-icon-wrapper">
+        <button class="icon-btn" aria-label="Menu" (click)="toggleMenu()">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="top-bar__right">
-    <!-- Bell icon with badge -->
-    <div class="floating-icon-wrapper">
-      <button class="icon-btn notification-bell" (click)="goToNotifications()" aria-label="Notifications">
-        <span class="material-symbols-outlined"
-              [style.font-variation-settings]="'FILL ' + (unreadCount() > 0 ? '1' : '0')">notifications</span>
-        @if (unreadCount() > 0) {
-          <span class="notification-bell__badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
-        }
-      </button>
+    <div class="top-bar__right">
+      <!-- Bell icon with badge -->
+      <div class="floating-icon-wrapper">
+        <button class="icon-btn notification-bell" (click)="goToNotifications()" aria-label="Notifications">
+          <span class="material-symbols-outlined"
+          [style.font-variation-settings]="'FILL ' + (unreadCount() > 0 ? '1' : '0')">notifications</span>
+          @if (unreadCount() > 0) {
+            <span class="notification-bell__badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+          }
+        </button>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<!-- Floating Toast Notification -->
-@if (notifService.latestNotification(); as toast) {
-  <div class="toast-overlay" (click)="dismissToast()">
-    <app-notification-card [notification]="toast"></app-notification-card>
-  </div>
-}
+  <!-- Floating Toast Notification -->
+  @if (notifService.latestNotification(); as toast) {
+    <div class="toast-overlay" (click)="dismissToast()">
+      <app-notification-card [notification]="toast"></app-notification-card>
+    </div>
+  }
 
-<!-- Page Content (router outlet) -->
-<main class="page-content">
-  <router-outlet></router-outlet>
-</main>
+  <!-- Page Content (router outlet) -->
+  <main class="page-content">
+    <router-outlet></router-outlet>
+  </main>
 
-<!-- Bottom Navigation - Menu Sheet -->
-@if (showMenu) {
-  <div class="menu-overlay" (click)="closeMenu()">
-    <div class="menu-sheet" (click)="$event.stopPropagation()">
-      <div class="menu-sheet__brand">
-        <div class="user-profile" *ngIf="authService.currentUser() as user">
-          <img [src]="user.avatarUrl || 'assets/icon/favicon.png'" alt="User avatar" class="user-profile__avatar">
-          <div class="user-profile__info">
-            <h3 class="user-profile__name">{{ user.name }}</h3>
-            <p class="user-profile__email">{{ user.email }}</p>
-          </div>
+  <!-- Bottom Navigation - Menu Sheet -->
+  @if (showMenu) {
+    <div class="menu-overlay" (click)="closeMenu()">
+      <div class="menu-sheet" (click)="$event.stopPropagation()">
+        <div class="menu-sheet__brand">
+          @if (authService.currentUser(); as user) {
+            <div class="user-profile">
+              <img [src]="user.avatarUrl || 'assets/icon/favicon.png'" alt="User avatar" class="user-profile__avatar">
+              <div class="user-profile__info">
+                <h3 class="user-profile__name">{{ user.name }}</h3>
+                <p class="user-profile__email">{{ user.email }}</p>
+              </div>
+            </div>
+          }
+          @if (!authService.currentUser()) {
+            <h2 class="menu-sheet__brand-title">Smart Fuel</h2>
+          }
+          <p class="menu-sheet__brand-subtitle">Gestión inteligente de combustible</p>
         </div>
-        <h2 class="menu-sheet__brand-title" *ngIf="!authService.currentUser()">Smart Fuel</h2>
-        <p class="menu-sheet__brand-subtitle">Gestión inteligente de combustible</p>
+
+        <div class="menu-sheet__links">
+          @for (item of navItems; track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="menu-sheet__link--active"
+              class="menu-sheet__link"
+              (click)="closeMenu()">
+              <span class="material-symbols-outlined menu-sheet__link-icon">{{ item.icon }}</span>
+              <span class="menu-sheet__link-label">{{ item.label }}</span>
+            </a>
+          }
+        </div>
+
+        <button class="menu-sheet__logout-btn" (click)="authService.logout()">
+          <span class="material-symbols-outlined">logout</span>
+          Cerrar Sesión
+        </button>
+
+        <button class="menu-sheet__close-btn" (click)="closeMenu()">
+          Cerrar Menú
+        </button>
       </div>
-
-      <div class="menu-sheet__links">
-        @for (item of navItems; track item.path) {
-          <a
-            [routerLink]="item.path"
-            routerLinkActive="menu-sheet__link--active"
-            class="menu-sheet__link"
-            (click)="closeMenu()">
-            <span class="material-symbols-outlined menu-sheet__link-icon">{{ item.icon }}</span>
-            <span class="menu-sheet__link-label">{{ item.label }}</span>
-          </a>
-        }
-      </div>
-
-      <button class="menu-sheet__logout-btn" (click)="authService.logout()">
-        <span class="material-symbols-outlined">logout</span>
-        Cerrar Sesión
-      </button>
-
-      <button class="menu-sheet__close-btn" (click)="closeMenu()">
-        Cerrar Menú
-      </button>
     </div>
-  </div>
-}
+  }
 </div>

@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { NotificationsService } from '../core/services/notifications.service';
 import { NotificationCardComponent } from '../shared/components/notification-card/notification-card.component';
 import { MapComponent } from '../shared/components/map/map.component';
@@ -15,7 +15,7 @@ interface NavItem {
 
 @Component({
     selector: 'app-layout',
-    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationCardComponent, MapComponent],
+    imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationCardComponent, MapComponent],
     templateUrl: './layout.component.html',
     styleUrl: './layout.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
