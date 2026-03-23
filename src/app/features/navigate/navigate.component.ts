@@ -111,6 +111,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   // Custom Trip Alert Modal
   showTripAlertModal = false;
   tripAlertData: { title: string; message: string; detail: string } | null = null;
+  private hasShownAutonomyAlert = false;
 
   ngOnInit(): void {
     this.startWatchingPosition();
@@ -576,6 +577,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
             r.stopsRequired = Math.max(0, Math.floor(km / (safeAuto > 5 ? safeAuto : 50)));
          });
       }
+      this.hasShownAutonomyAlert = false; // Reset on vehicle change
       if (this.isNavigating) this.executeTripLogic();
     });
   }
@@ -627,13 +629,14 @@ export class NavigateComponent implements OnInit, OnDestroy {
       const brandName = this.userPreferences.preferences?.[0]?.brandName || 'Surtidor Compatible';
       const numStops = Math.max(1, Math.floor(routeKm / (safeAutonomy > 5 ? safeAutonomy : 50)));
       
-      if (this.isNavigating) {
+      if (this.isNavigating && !this.hasShownAutonomyAlert) {
         this.tripAlertData = {
           title: '¡Atención! Autonomía Baja',
           message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km.`,
           detail: `Pautaremos paradas de recarga en ${brandName}.`
         };
         this.showTripAlertModal = true;
+        this.hasShownAutonomyAlert = true;
       }
 
       for (let i = 1; i <= numStops; i++) {
@@ -694,6 +697,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   private executeTripLogic(): void {
     this.isNavigating = true;
+    this.hasShownAutonomyAlert = false; // Initial trip check
     this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
     this.saveTripState();
     this.showRouteList = false;
@@ -719,6 +723,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
     localStorage.removeItem('smartFuel_activeTrip');
     this.destination = null; this.searchQuery = '';
     this.destinationName = 'Destino seleccionado';
+    this.hasShownAutonomyAlert = false;
     this.mapService.clearRouteAndMarkers();
     this.cdr.markForCheck();
   }
