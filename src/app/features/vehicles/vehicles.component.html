@@ -67,7 +67,7 @@
       <div class="modal-sheet" (click)="$event.stopPropagation()">
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
         
-        <form class="vehicle-form" (submit)="saveVehicle()" *ngIf="!showSuccess">
+        <form class="vehicle-form" (submit)="saveVehicle()" *ngIf="!showSuccess()">
           <div class="modal-body form-scroll-container">
             <div class="form-group">
               <label>Unidad de Medida</label>
@@ -128,17 +128,17 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isSaving">Cancelar</button>
-            <button type="submit" class="btn-primary" [disabled]="isSaving">
-              {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+            <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isSaving()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="isSaving()">
+              {{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
           </div>
         </form>
 
-        <div class="success-message" *ngIf="showSuccess">
+        <div class="success-message" *ngIf="showSuccess()">
           <span class="material-symbols-outlined check-icon">check_circle</span>
           <h3>¡Vehículo Guardado!</h3>
-          <p>Los cambios se han aplicado correctamente.</p>
+          <p>La información ha sido actualizada correctamente.</p>
         </div>
       </div>
     </div>

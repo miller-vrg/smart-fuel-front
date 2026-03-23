@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 import { ApiService } from '@core/services/api.service';
@@ -15,6 +15,13 @@ export class VehicleService {
 
   private dataRefreshedSubject = new BehaviorSubject<void>(undefined);
   dataRefreshed$ = this.dataRefreshedSubject.asObservable();
+
+  // Modal state tracking
+  private modalCount = signal(0);
+  isModalOpen = computed(() => this.modalCount() > 0);
+
+  registerModalOpen() { this.modalCount.update(c => c + 1); }
+  registerModalClose() { this.modalCount.update(c => Math.max(0, c - 1)); }
 
   refreshData() {
     this.dataRefreshedSubject.next();

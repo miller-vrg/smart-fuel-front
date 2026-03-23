@@ -1,5 +1,5 @@
 <!-- Top App Bar — Minimal Floating Icons -->
-<div class="layout-container">
+<div class="layout-container" [class.has-open-modal]="vehicleService.isModalOpen()">
   <app-map class="global-map" (mapClick)="onGlobalMapClick($event)"></app-map>
 
   <header class="top-bar">

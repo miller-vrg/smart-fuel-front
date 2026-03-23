@@ -269,9 +269,16 @@ export class FuelRefillComponent {
       const activeId = this.vehicleService.getActiveVehicleId();
       if (activeId) {
         this.selectedVehicleId = activeId;
+        const activeV = vs.find(v => v.id === activeId);
+        if (activeV && activeV.unit) {
+          this.unit.set(activeV.unit);
+        }
       } else {
         const main = vs.find(v => v.isMain);
-        if (main) this.selectedVehicleId = main.id;
+        if (main) {
+          this.selectedVehicleId = main.id;
+          if (main.unit) this.unit.set(main.unit);
+        }
       }
     });
   }

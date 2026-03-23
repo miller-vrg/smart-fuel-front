@@ -51,14 +51,14 @@
         Start Serene Journey
       </button>
       
-      <button class="refill-button" (click)="showRefillModal = true">
-        <span class="material-symbols-outlined">local_gas_station</span>
-        Registrar Carga de Combustible
+      <button class="cta-button" (click)="toggleRefillModal(true)">
+        <div class="cta-button__icon">
+          <span class="material-symbols-outlined">ev_station</span>
+        </div>
+        <div class="cta-button__text">Registrar Carga</div>
       </button>
     </div>
 
-    <!-- Fuel Refill Modal -->
-    <app-fuel-refill *ngIf="showRefillModal" (closeEvent)="showRefillModal = false"></app-fuel-refill>
     <!-- Efficiency Bento Grid -->
     <div class="bento-grid">
       <!-- Efficiency Chart -->
@@ -115,4 +115,10 @@
       </div>
     </div>
   </div>
+
+  <!-- Fuel Refill Modal -->
+  <app-fuel-refill 
+    *ngIf="showRefillModal" 
+    (closeEvent)="toggleRefillModal(false)">
+  </app-fuel-refill>
 }

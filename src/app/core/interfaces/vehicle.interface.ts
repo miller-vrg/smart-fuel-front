@@ -9,4 +9,5 @@ export interface Vehicle {
   avgKmPerGallon: number;
   safetyBuffer: number;
   isMain?: boolean;
+  unit?: 'liters' | 'gallons';
 }

@@ -61,6 +61,12 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  toggleRefillModal(show: boolean) {
+    this.showRefillModal = show;
+    if (show) this.vehicleService.registerModalOpen();
+    else this.vehicleService.registerModalClose();
+  }
+
   changeVehicle(id: string) {
     this.allVehicles$.pipe(first()).subscribe(vehicles => {
       const v = vehicles.find(x => x.id === id);

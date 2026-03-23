@@ -134,6 +134,10 @@
   pointer-events: none;
   overflow-y: auto;
 
+  .layout-container.has-open-modal & {
+    z-index: 2000;
+  }
+
   ::ng-deep router-outlet {
     display: none;
   }
