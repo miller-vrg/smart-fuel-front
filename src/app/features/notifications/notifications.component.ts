@@ -9,6 +9,7 @@ import { NotificationCardComponent } from '@shared/components/notification-card/
 
 @Component({
     selector: 'app-notifications',
+    standalone: true,
     imports: [NotificationCardComponent],
     templateUrl: './notifications.component.html',
     styleUrls: ['./notifications.component.scss']

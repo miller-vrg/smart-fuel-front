@@ -8,6 +8,7 @@ import { Vehicle } from '@core/interfaces/vehicle.interface';
 
 @Component({
     selector: 'app-vehicles',
+    standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './vehicles.component.html',
     styleUrl: './vehicles.component.scss',

@@ -12,6 +12,7 @@ import { ToggleSetting, FuelPriority } from './preferences.interfaces';
 
 @Component({
     selector: 'app-preferences',
+    standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './preferences.component.html',
     styleUrl: './preferences.component.scss',

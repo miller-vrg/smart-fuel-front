@@ -273,6 +273,21 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   drawRoute(coordinates: number[][]): void {
     if (!this.map) return;
 
+    this.updateRouteData(coordinates);
+
+    // Fit bounds only if it's the first time or explicitly requested
+    const bounds = new maplibregl.LngLatBounds();
+    coordinates.forEach(coord => bounds.extend([coord[0], coord[1]] as LngLatLike));
+    this.map.fitBounds(bounds, { padding: 60, duration: 1000 });
+  }
+
+  /**
+   * Updates only the polyline geometry without moving the camera.
+   * Useful for "slicing" the route as the user moves.
+   */
+  updateRouteData(coordinates: number[][]): void {
+    if (!this.map) return;
+
     const sourceId = 'route-source';
     const layerId = 'route-layer';
 
@@ -285,11 +300,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       },
     };
 
-    // If source exists, just update data
     if (this.map.getSource(sourceId)) {
       (this.map.getSource(sourceId) as any).setData(geojson);
     } else {
-      // Create source and layer
       this.map.addSource(sourceId, {
         type: 'geojson',
         data: geojson,
@@ -310,10 +323,5 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         },
       });
     }
-
-    // Fit bounds to show the whole route
-    const bounds = new maplibregl.LngLatBounds();
-    coordinates.forEach(coord => bounds.extend([coord[0], coord[1]] as LngLatLike));
-    this.map.fitBounds(bounds, { padding: 60, duration: 1000 });
   }
 }

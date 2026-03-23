@@ -10,6 +10,7 @@ import { FuelLog } from '@core/interfaces/fuel.interface';
 
 @Component({
     selector: 'app-history',
+    standalone: true,
     imports: [CommonModule],
     templateUrl: './history.component.html',
     styleUrl: './history.component.scss',

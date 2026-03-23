@@ -10,9 +10,13 @@ import { Vehicle } from '@/app/core/interfaces/vehicle.interface';
 import { AuthService } from '@core/services/auth.service';
 import { computed } from '@angular/core';
 
+import { DashboardComponent as DashboardComp } from './dashboard.component'; // just a placeholder for the component itself if needed
+import { FuelRefillComponent } from '../fuel/fuel-refill.component';
+
 @Component({
     selector: 'app-dashboard',
-    imports: [CommonModule],
+    standalone: true,
+    imports: [CommonModule, FuelRefillComponent],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -21,6 +25,8 @@ export class DashboardComponent implements OnInit {
   vehicleService = inject(VehicleService);
   fuelService = inject(FuelService);
   authService = inject(AuthService);
+
+  showRefillModal = false;
 
   readonly userName = computed(() => this.authService.currentUser()?.name || 'User');
   

@@ -29,11 +29,21 @@
       </div>
     }
     <!-- Start Journey Button -->
-    <button class="cta-button">
-      <span class="material-symbols-outlined cta-button__icon"
-      style="font-variation-settings: 'FILL' 1;">bolt</span>
-      Start Serene Journey
-    </button>
+    <div class="actions-row">
+      <button class="cta-button">
+        <span class="material-symbols-outlined cta-button__icon"
+        style="font-variation-settings: 'FILL' 1;">bolt</span>
+        Start Serene Journey
+      </button>
+      
+      <button class="refill-button" (click)="showRefillModal = true">
+        <span class="material-symbols-outlined">local_gas_station</span>
+        Registrar Carga
+      </button>
+    </div>
+
+    <!-- Fuel Refill Modal -->
+    <app-fuel-refill *ngIf="showRefillModal" (closeEvent)="showRefillModal = false"></app-fuel-refill>
     <!-- Efficiency Bento Grid -->
     <div class="bento-grid">
       <!-- Efficiency Chart -->

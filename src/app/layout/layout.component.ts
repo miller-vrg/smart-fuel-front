@@ -15,6 +15,7 @@ interface NavItem {
 
 @Component({
     selector: 'app-layout',
+    standalone: true,
     imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationCardComponent, MapComponent],
     templateUrl: './layout.component.html',
     styleUrl: './layout.component.scss',

@@ -144,20 +144,27 @@
 }
 
 /* ── CTA Button ──────────────────────────────────── */
+.actions-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 .cta-button {
   width: 100%;
   background: linear-gradient(135deg, #006c53, #8ff6d0);
   color: #fff;
   border: none;
   border-radius: var(--radius-full);
-  padding: 20px 32px;
+  padding: 18px 24px;
   font-family: var(--font-headline);
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 108, 83, 0.1);
   transition: transform 0.2s;
@@ -167,7 +174,34 @@
   }
 
   &__icon {
-    font-size: 24px;
+    font-size: 22px;
+  }
+}
+
+.refill-button {
+  padding: 18px 20px;
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  &:active {
+    transform: scale(0.95);
+    background: var(--surface-container-highest);
+  }
+
+  .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--primary);
   }
 }
 

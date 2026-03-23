@@ -60,4 +60,8 @@ export class MapService {
   drawRoute(coordinates: number[][]) {
     this.mapComp()?.drawRoute(coordinates);
   }
+
+  updateRouteData(coordinates: number[][]) {
+    this.mapComp()?.updateRouteData(coordinates);
+  }
 }
