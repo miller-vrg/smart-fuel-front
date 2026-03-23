@@ -68,61 +68,63 @@
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
         
         <form class="vehicle-form" (submit)="saveVehicle()">
-          <div class="form-group">
-            <label>Unidad de Medida</label>
-            <select [(ngModel)]="inputUnit" name="unit">
-              <option value="gallons">Galones (Gal)</option>
-              <option value="liters">Litros (L)</option>
-            </select>
-          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Unidad de Medida</label>
+              <select [(ngModel)]="inputUnit" name="unit" (change)="onUnitChange()">
+                <option value="gallons">Galones (Gal)</option>
+                <option value="liters">Litros (L)</option>
+              </select>
+            </div>
 
-          <div class="form-vertical">
-            <div class="form-group">
-              <label>Marca</label>
-              <input type="text" [(ngModel)]="form.brand" name="brand" required placeholder="Ej: Mazda">
+            <div class="form-vertical">
+              <div class="form-group">
+                <label>Marca</label>
+                <input type="text" [(ngModel)]="form.brand" name="brand" required placeholder="Ej: Mazda">
+              </div>
+              <div class="form-group">
+                <label>Modelo</label>
+                <input type="text" [(ngModel)]="form.model" name="model" required placeholder="Ej: CX-5">
+              </div>
+              <div class="form-group">
+                <label>Placa</label>
+                <input type="text" [(ngModel)]="form.licensePlate" name="licensePlate" required placeholder="ABC-123">
+              </div>
+              <div class="form-group">
+                <label>Año</label>
+                <input type="text" [(ngModel)]="form.year" name="year" required placeholder="2024">
+              </div>
             </div>
-            <div class="form-group">
-              <label>Modelo</label>
-              <input type="text" [(ngModel)]="form.model" name="model" required placeholder="Ej: CX-5">
-            </div>
-            <div class="form-group">
-              <label>Placa</label>
-              <input type="text" [(ngModel)]="form.licensePlate" name="licensePlate" required placeholder="ABC-123">
-            </div>
-            <div class="form-group">
-              <label>Año</label>
-              <input type="text" [(ngModel)]="form.year" name="year" required placeholder="2024">
-            </div>
-          </div>
 
-          <div class="form-vertical">
+            <div class="form-vertical">
+              <div class="form-group">
+                <label>Capacidad Tanque ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
+                <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>
+              </div>
+              <div class="form-group">
+                <label>Rendimiento (Km/{{ inputUnit === 'liters' ? 'Litro' : 'Gallón' }})</label>
+                <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label>Capacidad Tanque ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
-              <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>
+              <label>Combustible Actual ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
+              <input type="number" [(ngModel)]="form.currentFuelGallons" name="currFuel" required>
             </div>
+
             <div class="form-group">
-              <label>Rendimiento (Km/{{ inputUnit === 'liters' ? 'Litro' : 'Gallón' }})</label>
-              <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
+              <label>Reserva de Seguridad: {{ (form.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</label>
+              <input type="range" [(ngModel)]="form.safetyBuffer" name="safetyBuffer" min="0.10" max="0.25" step="0.01" style="width:100%; height:4px; accent-color:var(--primary);">
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px; color:var(--on-surface-variant);">
+                 <span>10% (Min)</span>
+                 <span>25% (Max)</span>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>Combustible Actual ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
-            <input type="number" [(ngModel)]="form.currentFuelGallons" name="currFuel" required>
-          </div>
-
-          <div class="form-group">
-            <label>Reserva de Seguridad: {{ (form.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</label>
-            <input type="range" [(ngModel)]="form.safetyBuffer" name="safetyBuffer" min="0.10" max="0.25" step="0.01" style="width:100%; height:4px; accent-color:var(--primary);">
-            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px; color:var(--on-surface-variant);">
-               <span>10% (Min)</span>
-               <span>25% (Max)</span>
+            <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin: 8px 0;">
+              <input type="checkbox" id="isMain" [(ngModel)]="form.isMain" name="isMain" style="width: 20px; height: 20px; cursor: pointer;">
+              <label for="isMain" style="margin: 0; cursor: pointer; font-weight: 500;">Establecer como Vehículo Principal</label>
             </div>
-          </div>
-
-          <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin: 8px 0;">
-            <input type="checkbox" id="isMain" [(ngModel)]="form.isMain" name="isMain" style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="isMain" style="margin: 0; cursor: pointer; font-weight: 500;">Establecer como Vehículo Principal</label>
           </div>
 
           <div class="modal-actions">
