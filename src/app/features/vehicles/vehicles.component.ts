@@ -25,7 +25,7 @@ export class VehiclesComponent implements OnInit {
   
   // Form fields
   form: Partial<Vehicle> = this.resetForm();
-  inputUnit: 'liters' | 'gallons' = 'liters';
+  inputUnit: 'liters' | 'gallons' = 'gallons';
   readonly GAL_TO_L = 3.78541;
 
   ngOnInit() {

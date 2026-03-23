@@ -68,12 +68,15 @@
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
         
         <form class="vehicle-form" (submit)="saveVehicle()">
-          <div class="unit-selector">
-            <button type="button" [class.active]="inputUnit === 'liters'" (click)="inputUnit = 'liters'">Litros (L)</button>
-            <button type="button" [class.active]="inputUnit === 'gallons'" (click)="inputUnit = 'gallons'">Galones (Gal)</button>
+          <div class="form-group">
+            <label>Unidad de Medida</label>
+            <select [(ngModel)]="inputUnit" name="unit">
+              <option value="gallons">Galones (Gal)</option>
+              <option value="liters">Litros (L)</option>
+            </select>
           </div>
 
-          <div class="form-grid">
+          <div class="form-vertical">
             <div class="form-group">
               <label>Marca</label>
               <input type="text" [(ngModel)]="form.brand" name="brand" required placeholder="Ej: Mazda">
@@ -92,7 +95,7 @@
             </div>
           </div>
 
-          <div class="form-grid">
+          <div class="form-vertical">
             <div class="form-group">
               <label>Capacidad Tanque ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
               <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>

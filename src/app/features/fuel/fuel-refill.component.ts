@@ -29,12 +29,15 @@ import { take } from 'rxjs';
             </select>
           </div>
 
-          <div class="unit-toggle">
-            <button type="button" [class.active]="unit() === 'liters'" (click)="setUnit('liters')">Litros (L)</button>
-            <button type="button" [class.active]="unit() === 'gallons'" (click)="setUnit('gallons')">Galones (Gal)</button>
+          <div class="form-group">
+            <label>Unidad de Medida</label>
+            <select [ngModel]="unit()" (ngModelChange)="setUnit($event)" name="unit">
+              <option value="gallons">Galones (Gal)</option>
+              <option value="liters">Litros (L)</option>
+            </select>
           </div>
 
-          <div class="form-grid">
+          <div class="form-column">
             <div class="form-group">
               <label>Precio por {{ unitLabel() }}</label>
               <input type="number" [(ngModel)]="pricePerUnit" name="price" placeholder="0" (input)="onInputChange()">
@@ -135,9 +138,9 @@ import { take } from 'rxjs';
       box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .form-column {
+      display: flex;
+      flex-direction: column;
       gap: 16px;
       margin-bottom: 20px;
     }
@@ -210,7 +213,7 @@ export class FuelRefillComponent {
   totalMoney: number | null = null;
   
   // Units state
-  unit = signal<'liters' | 'gallons'>('liters');
+  unit = signal<'liters' | 'gallons'>('gallons');
   
   @Output() closeEvent = new EventEmitter<void>();
 
