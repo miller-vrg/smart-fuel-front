@@ -297,7 +297,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
         this.notificationsService.notifications.update(list => [{
           id: Math.random().toString(36).substring(7),
           type: 'anomaly_alert',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           title: 'Combustible Crítico',
           message: `Nivel de combustible al ${this.fuelLevelPercent.toFixed(0)}%. Busca una estación próxima.`,
           isRead: false
@@ -692,7 +692,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
         this.notificationsService.notifications.update(list => [{
           id: Math.random().toString(36).substring(7),
           type: 'smart_stop',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           title: 'Autonomía Insuficiente',
           message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km. Sugiriendo paradas en ${brandName}.`,
           isRead: false
