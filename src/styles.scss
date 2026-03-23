@@ -161,6 +161,10 @@ app-root {
   min-height: 100dvh;
 }
 
+.navigate-component {
+  padding-top: 0px !important;
+}
+
 /* -- Global Map Markers (used by MapComponent in LayoutComponent) -- */
 .user-location-marker {
   width: 28px;

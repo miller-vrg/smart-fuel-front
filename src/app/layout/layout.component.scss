@@ -145,10 +145,6 @@
   pointer-events: none;
   overflow-y: auto;
 
-  .navigate-component {
-    padding-top: 0px !important;
-  }
-
   .layout-container.has-open-modal & {
     z-index: 2000;
   }
