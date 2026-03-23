@@ -86,7 +86,8 @@ export class VehiclesComponent implements OnInit {
       fuelCapacityGallons: 12,
       avgKmPerGallon: 40,
       currentFuelGallons: 6,
-      safetyBuffer: 0.15
+      safetyBuffer: 0.15,
+      isMain: false
     };
   }
 }

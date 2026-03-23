@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, switchMap, EMPTY } from 'rxjs';
+import { BehaviorSubject, switchMap, EMPTY, take } from 'rxjs';
 
 import { PreferencesService } from '@core/services/preferences.service';
 import { VehicleService } from '@core/services/vehicle.service';
@@ -20,6 +20,7 @@ import { ToggleSetting, FuelPriority } from './preferences.interfaces';
 export class PreferencesComponent implements OnInit {
   prefService = inject(PreferencesService);
   vehicleService = inject(VehicleService);
+  private cdr = inject(ChangeDetectorRef);
 
   pref$ = new BehaviorSubject<Preference | null>(null);
 
@@ -85,6 +86,8 @@ export class PreferencesComponent implements OnInit {
         if (loaded.length > 0) {
           this.fuelPriorities = loaded;
         }
+
+        this.cdr.markForCheck();
       }
     });
   }
@@ -122,35 +125,39 @@ export class PreferencesComponent implements OnInit {
   }
 
   saveConfig(): void {
-    const currentPreferences = this.pref$.value;
-    if (currentPreferences) {
-      const activeBrands = this.fuelPriorities.filter(fp => fp.starred);
-      
-      const newPreferences = activeBrands.map((fp, i) => ({
-        brandName: fp.brand,
-        priority: i + 1,
-        onlyHighway: false
-      }));
+    const activeBrands = this.fuelPriorities.filter(fp => fp.starred);
+    const vehicleId = this.pref$.value?.vehicleId || this.vehicleService.getActiveVehicleId();
 
-      const updatedPref: Preference = { 
-        vehicleId: currentPreferences.vehicleId || this.vehicleService.getActiveVehicleId() || '',
-        preferences: newPreferences,
-        excludedBrands: this.fuelPriorities.filter(fp => !fp.starred).map(fp => fp.brand),
-        notifyGasStationKmBefore: this.notifyGasStationKmBefore,
-        notifyRestStopHours: this.notifyRestStopHours,
-        maxSpeedLimit: this.maxSpeedLimit
-      };
-      
-      this.prefService.updatePreferences(updatedPref).subscribe({
-        next: (res) => {
-          this.pref$.next(res);
-          alert('Preferences saved automatically to backend via sync!');
-        },
-        error: (err) => {
-          console.error(err);
-          alert('Failed to save preferences.');
-        }
-      });
+    if (!vehicleId) {
+      alert('Debes tener un vehículo seleccionado para guardar preferencias.');
+      return;
     }
+    
+    const newPreferences = activeBrands.map((fp, i) => ({
+      brandName: fp.brand,
+      priority: i + 1,
+      onlyHighway: false
+    }));
+
+    const updatedPref: Preference = { 
+      vehicleId: vehicleId,
+      preferences: newPreferences,
+      excludedBrands: this.fuelPriorities.filter(fp => !fp.starred).map(fp => fp.brand),
+      notifyGasStationKmBefore: this.notifyGasStationKmBefore,
+      notifyRestStopHours: this.notifyRestStopHours,
+      maxSpeedLimit: this.maxSpeedLimit
+    };
+    
+    this.prefService.updatePreferences(updatedPref).subscribe({
+      next: (res) => {
+        this.pref$.next(res);
+        this.cdr.markForCheck();
+        alert('Preferencias guardadas exitosamente!');
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Error al guardar preferencias.');
+      }
+    });
   }
 }

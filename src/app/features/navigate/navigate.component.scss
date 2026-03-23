@@ -341,60 +341,6 @@
 }
 
 /* ── Active Vehicle Badge ───────────────────────── */
-.active-vehicle-badge {
-  position: absolute;
-  top: 80px;
-  left: 16px;
-  background: var(--surface-container-highest);
-  color: var(--on-surface);
-  padding: 12px 10px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-headline);
-  font-size: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 100;
-  border: 1px solid var(--outline-variant);
-  min-width: 64px;
-  text-align: center;
-  pointer-events: auto;
-
-  &__icon {
-    width: 36px;
-    height: 36px;
-    background: var(--primary-container);
-    color: var(--on-primary-container);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .material-symbols-outlined {
-      font-size: 20px;
-      font-variation-settings: 'FILL' 1;
-    }
-  }
-
-  &__name {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-
-    span {
-      opacity: 0.7;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    strong {
-      font-weight: 700;
-    }
-  }
-}
 
 /* ── Speed Alert Overlay ────────────────────── */
 .speed-alert-overlay {
@@ -1240,3 +1186,46 @@
   70% { box-shadow: 0 0 0 10px rgba(186, 26, 26, 0); }
   100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
 }
+
+/* ── Active Vehicle Badge (Vertical/Lateral) ────────────────── */
+.active-vehicle-badge {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface-container-lowest, #fff); /* matching arrival bar */
+  backdrop-filter: blur(12px);
+  color: var(--on-surface, #1c1b1f);
+  padding: 12px 4px; /* Thinner */
+  border-radius: 0 12px 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100; /* ensured visibility */
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--primary, #6750a4); /* Color match border */
+  border-left: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  width: 28px; /* Fixed thinner width */
+
+  &:hover {
+    background: var(--surface-container);
+    width: 34px;
+    padding-left: 8px;
+  }
+
+  &__vertical-name {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--primary, #6750a4); /* Matching km/h exactly */
+  }
+}
+

@@ -3,4 +3,5 @@ export interface UserPosition {
   lat: number;
   accuracy?: number;
   heading?: number;
+  speed?: number;
 }

@@ -11,13 +11,9 @@
 
   <!-- Active Vehicle Badge (Vertical on Left) -->
   @if (isNavigating && activeVehicle) {
-    <div class="active-vehicle-badge">
-      <div class="active-vehicle-badge__icon">
-        <span class="material-symbols-outlined">directions_car</span>
-      </div>
-      <div class="active-vehicle-badge__name">
-        <span>{{ activeVehicle.brand }}</span>
-        <strong>{{ activeVehicle.model }}</strong>
+    <div class="active-vehicle-badge" (click)="showVehicleSelector = true">
+      <div class="active-vehicle-badge__vertical-name">
+        {{ activeVehicle.brand }} {{ activeVehicle.model }}
       </div>
     </div>
   }

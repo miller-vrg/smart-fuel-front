@@ -8,4 +8,5 @@ export interface Vehicle {
   currentFuelGallons: number;
   avgKmPerGallon: number;
   safetyBuffer: number;
+  isMain?: boolean;
 }

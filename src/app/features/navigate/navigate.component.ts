@@ -95,6 +95,18 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   // Store exact polyline array to plot markers ON the route
   detailedRouteCoords: number[][] = [];
+  
+  // Real-time tracking & Navigation Logic
+  private lastPosition: UserPosition | null = null;
+  private totalKmTraveled: number = 0;
+  private lastKmUpdate: number = 0; // for periodic backend updates
+  private currentRouteSteps: any[] = [];
+  private nextStepIndex: number = 0;
+  private lastRecalculationTime = 0;
+  
+  maneuverIcon = 'navigation';
+  maneuverDistance = '';
+  maneuverStreet = '';
 
   // Custom Trip Alert Modal
   showTripAlertModal = false;
@@ -118,11 +130,19 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.vehicleService.loadInitialVehicle().pipe(take(1)).subscribe(vs => {
       if (vs && vs.length > 0) {
         this.availableVehicles = vs;
-        // set default active to preference loading
-        this.activeVehicle = vs[0];
-        this.prefService.getByVehicle(vs[0].id).pipe(take(1)).subscribe(pref => {
-          this.userPreferences = pref;
-        });
+        
+        // Auto-seleccionar el vehículo principal si existe
+        const mainV = vs.find(v => v.isMain);
+        if (mainV && !this.activeVehicle) {
+          this.activeVehicle = mainV;
+        }
+
+        // Solo cargar preferencias si hay un vehículo activo
+        if (this.activeVehicle) {
+          this.prefService.getByVehicle(this.activeVehicle.id).pipe(take(1)).subscribe(pref => {
+            this.userPreferences = pref;
+          });
+        }
       }
     });
   }
@@ -152,9 +172,9 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
         this.mapService.setUserLocation(this.userPosition.lng, this.userPosition.lat, this.userPosition.heading);
 
-        // In 3D mode, keep camera behind user looking forward
-        if (this.isNavigating) {
-          this.mapService.followUser3D(this.userPosition.lng, this.userPosition.lat, this.userPosition.heading);
+        // Real-time Navigation & Fuel Tracking Logic
+        if (this.isNavigating && this.activeVehicle) {
+          this.processNavigationUpdate(this.userPosition);
         }
 
         if (isFirstLocation) {
@@ -199,8 +219,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
             }
           }
         }
-
-        this.locationReady = true;
+        
+        this.lastPosition = this.userPosition;
         this.cdr.markForCheck();
       },
       (err) => {
@@ -217,6 +237,136 @@ export class NavigateComponent implements OnInit, OnDestroy {
       this.watchId = null;
     }
   }
+
+  private processNavigationUpdate(currentPos: UserPosition): void {
+    if (!this.activeVehicle || !this.destination) return;
+
+    // Update current speed (m/s to km/h)
+    this.currentSpeed = Math.round((currentPos.speed || 0) * 3.6);
+
+    // 1. Calculate delta distance & Fuel consumption
+    if (this.lastPosition) {
+      const deltaKm = this.calculateDistance(this.lastPosition, currentPos);
+      if (deltaKm > 0) {
+        this.totalKmTraveled += deltaKm;
+        
+        // Decrement fuel: Gal = Km / (Km/Gal)
+        const gallonsConsumed = deltaKm / (this.activeVehicle.avgKmPerGallon || 30);
+        this.activeVehicle.currentFuelGallons = Math.max(0, this.activeVehicle.currentFuelGallons - gallonsConsumed);
+        
+        // Update vehicle total KM if tracked (optional, we use totalKmTraveled for autonomy)
+        // Periodic sync with backend (every 1 KM)
+        if (this.totalKmTraveled - this.lastKmUpdate >= 1) {
+           this.lastKmUpdate = this.totalKmTraveled;
+           this.vehicleService.updateVehicle(this.activeVehicle.id, { 
+             currentFuelGallons: this.activeVehicle.currentFuelGallons 
+           }).subscribe();
+        }
+      }
+    }
+
+    // 2. Maneuver Logic (Turn-by-turn)
+    if (this.currentRouteSteps.length > 0 && this.nextStepIndex < this.currentRouteSteps.length) {
+      const step = this.currentRouteSteps[this.nextStepIndex];
+      const stepCoord = { lng: step.maneuver.location[0], lat: step.maneuver.location[1] };
+      const distToStep = this.calculateDistance(currentPos, stepCoord) * 1000; // in meters
+
+      // Update instructions
+      const icon = this.getManeuverIcon(step.maneuver.type, step.maneuver.modifier);
+      const distText = distToStep > 1000 
+        ? `${(distToStep / 1000).toFixed(1)} km` 
+        : `${Math.round(distToStep)} m`;
+      
+      this.updateManeuver({
+        icon,
+        distance: distText,
+        street: step.name || step.maneuver.instruction
+      });
+
+      // Advance step if within 30m
+      if (distToStep < 30) {
+        this.nextStepIndex++;
+      }
+    }
+
+    // 3. Off-route detection (Simplified: distance to next step coordinate OR distance to current segment)
+    // If not first step, and we are far from the path
+    const now = Date.now();
+    if (now - this.lastRecalculationTime > 10000) { // Max once every 10s
+       // Check distance to closest segment in detailedRouteCoords
+       let minLineDist = Infinity;
+       for (let i = 0; i < this.detailedRouteCoords.length - 1; i++) {
+          const d = this.distanceToSegment(currentPos, this.detailedRouteCoords[i] as any, this.detailedRouteCoords[i + 1] as any);
+          if (d < minLineDist) minLineDist = d;
+       }
+
+       if (minLineDist > 0.1) { // 100 meters off-route
+          this.lastRecalculationTime = now;
+          this.calculateRoute(currentPos, this.destination).then(() => {
+             this.executeTripLogic(); // restart logic with new steps
+          });
+       }
+    }
+
+    this.monitorSpeed();
+    this.evaluateTripRules();
+    this.lastPosition = currentPos;
+  }
+
+  private updateManeuver(data: any): void {
+    this.maneuver = data;
+    this.maneuverIcon = data.icon;
+    this.maneuverDistance = data.distance;
+    this.maneuverStreet = data.street;
+    this.showManeuver = true;
+    this.cdr.markForCheck();
+
+    if (this.maneuverTimeout) clearTimeout(this.maneuverTimeout);
+    this.maneuverTimeout = setTimeout(() => {
+      this.showManeuver = false;
+      this.cdr.markForCheck();
+    }, 5000);
+  }
+
+  private calculateDistance(p1: { lat: number; lng: number }, p2: { lat: number; lng: number }): number {
+    const R = 6371; // km
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private distanceToSegment(p: UserPosition, a: [number, number], b: [number, number]): number {
+    const x = p.lng, y = p.lat;
+    const x1 = a[0], y1 = a[1];
+    const x2 = b[0], y2 = b[1];
+
+    const A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    if (lenSq !== 0) param = dot / lenSq;
+
+    let xx, yy;
+    if (param < 0) {
+      xx = x1; yy = y1;
+    } else if (param > 1) {
+      xx = x2; yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = x - xx, dy = y - yy;
+    // result in degrees (~111km per degree), convert to km roughly
+    return Math.sqrt(dx * dx + dy * dy) * 111.32;
+  }
+
+
+
 
   // ─── Search (Nominatim) ──────────────────────
 
@@ -284,7 +434,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
     try {
       this.mapService.clearRouteAndMarkers(); // Eliminar rutas pasadas
       
-      const osrmUrl = `${environment.osrmUrl}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&alternatives=3`;
+      const osrmUrl = `${environment.osrmUrl}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&alternatives=3&steps=true`;
       const response = await fetch(osrmUrl);
       const data = await response.json();
 
@@ -305,7 +455,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
               distance: r.distance,
               geometry: r.geometry,
               summary: r.legs?.[0]?.summary || (i === 0 ? 'Ruta Principal' : `Ruta Alternativa ${i}`),
-              stopsRequired: Math.max(0, stops)
+              stopsRequired: Math.max(0, stops),
+              steps: r.legs?.[0]?.steps || []
             };
          });
 
@@ -335,12 +486,39 @@ export class NavigateComponent implements OnInit, OnDestroy {
      this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
      
      this.detailedRouteCoords = route.geometry.coordinates;
+     this.currentRouteSteps = route.steps;
+     this.nextStepIndex = 0;
+     
      this.mapService.drawRoute(this.detailedRouteCoords);
      
-     this.updateManeuver({ icon: 'straight', distance: 'Calculada', street: this.destinationName });
+     // Set initial maneuver
+     if (this.currentRouteSteps.length > 0) {
+        const step = this.currentRouteSteps[0];
+        this.updateManeuver({ 
+            icon: this.getManeuverIcon(step.maneuver.type, step.maneuver.modifier), 
+            distance: '0 m', 
+            street: step.name || step.maneuver.instruction 
+        });
+     } else {
+        this.updateManeuver({ icon: 'straight', distance: 'Calculada', street: this.destinationName });
+     }
+
      this.evaluateTripRules();
      this.saveTripState();
      this.cdr.markForCheck();
+  }
+
+  private getManeuverIcon(type: string, modifier?: string): string {
+    if (type === 'turn') {
+      if (modifier?.includes('left')) return 'turn_left';
+      if (modifier?.includes('right')) return 'turn_right';
+      return 'near_me';
+    }
+    if (type === 'merge') return 'merge';
+    if (type === 'roundabout') return 'roundabout_right';
+    if (type === 'exit') return 'ramp_right';
+    if (type === 'arrive') return 'location_on';
+    return 'straight';
   }
 
   private saveTripState(): void {
@@ -377,18 +555,6 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  updateManeuver(data: any): void {
-    this.maneuver = data;
-    this.showManeuver = true;
-    this.monitorSpeed(); // Validar velocidad en cada actualización de datos
-    this.cdr.markForCheck();
-
-    if (this.maneuverTimeout) clearTimeout(this.maneuverTimeout);
-    this.maneuverTimeout = setTimeout(() => {
-      this.showManeuver = false;
-      this.cdr.markForCheck();
-    }, 5000);
-  }
 
   clearSearch(): void {
     this.searchQuery = '';
@@ -433,6 +599,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
       this.mapService.flyTo(this.userPosition.lng, this.userPosition.lat, 16);
     }
   }
+
+  // ─── Utilities ───────────────────────────────
+
+
 
   // ─── Trip execution ──────────────────────────
 
