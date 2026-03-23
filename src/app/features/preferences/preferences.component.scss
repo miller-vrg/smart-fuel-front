@@ -1,11 +1,9 @@
 :host {
   display: block;
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 20;
   background: var(--surface, #faf9f6);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  min-height: 100%;
   pointer-events: auto;
   animation: page-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -16,7 +14,7 @@
 }
 
 .preferences {
-  padding: 80px 24px 32px;
+  padding: 16px 24px 32px;
   max-width: 512px;
   margin: 0 auto;
   display: flex;
