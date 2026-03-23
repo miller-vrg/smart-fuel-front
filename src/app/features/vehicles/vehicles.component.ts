@@ -135,7 +135,7 @@ export class VehiclesComponent implements OnInit {
     if (this.inputUnit === 'liters') {
       if (dataToSave.fuelCapacityGallons !== undefined) dataToSave.fuelCapacityGallons /= this.GAL_TO_L;
       if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons /= this.GAL_TO_L;
-      if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon /= this.GAL_TO_L; // FIXED: Changed *= to /= for Liters -> Gallons (Km/L to Km/Gal)
+      if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon *= this.GAL_TO_L; // FIXED: Changed /= to *= for Liters -> Gallons (Km/L to Km/Gal)
     }
 
     // Strict rounding to 2 decimals before saving
@@ -144,16 +144,16 @@ export class VehiclesComponent implements OnInit {
     if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon);
 
     // Remove ID and other read-only or extra fields from payload for PATCH/POST
-    const { 
-      id, 
-      notifyGasStationKmBefore, 
-      notifyRestStopHours, 
-      maxSpeedLimit, 
-      activeTrip, 
-      createdAt, 
+    const {
+      id,
+      notifyGasStationKmBefore,
+      notifyRestStopHours,
+      maxSpeedLimit,
+      activeTrip,
+      createdAt,
       updatedAt,
       userId,
-      ...cleanData 
+      ...cleanData
     } = dataToSave as any;
 
     const request = (this.editingVehicle && this.editingVehicle.id)
@@ -182,6 +182,16 @@ export class VehiclesComponent implements OnInit {
         this.loadVehicles();
       });
     }
+  }
+
+  getDisplayCapacity(v: Vehicle): number {
+    const val = v.unit === 'liters' ? v.fuelCapacityGallons * this.GAL_TO_L : v.fuelCapacityGallons;
+    return this.round(val);
+  }
+
+  getDisplayPerformance(v: Vehicle): number {
+    const val = v.unit === 'liters' ? v.avgKmPerGallon / this.GAL_TO_L : v.avgKmPerGallon;
+    return this.round(val);
   }
 
   private resetForm(): Partial<Vehicle> {

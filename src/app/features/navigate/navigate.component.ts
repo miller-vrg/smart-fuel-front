@@ -116,6 +116,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   tripAlertData: { title: string; message: string; detail: string } | null = null;
   private hasShownAutonomyAlert = false;
   private hasShownLowFuelAlert = false;
+  private isEvaluatingRules = false;
 
   // Cache stops so they don't flicker on every GPS update
   cachedSmartStops: { name: string; brand: string; lat: number; lng: number; alerted: boolean }[] = [];
@@ -485,9 +486,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
           let stops = 0;
           if (this.activeVehicle && this.userPreferences) {
             const km = r.distance / 1000;
-            const autonomy = (this.activeVehicle.currentFuelGallons * this.activeVehicle.avgKmPerGallon) || 300;
+            const autonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
             const safeAuto = autonomy - (this.userPreferences.notifyGasStationKmBefore ?? 20);
-            stops = Math.floor(km / (safeAuto > 5 ? safeAuto : 50));
+            // Number of stops = how many times we'll need to refuel along the way
+            // If km <= safeAuto, 0 stops. If km = 150, safeAuto = 100, 1 stop.
+            stops = km > safeAuto ? Math.floor(km / (safeAuto > 5 ? safeAuto : 50)) : 0;
           }
 
           return {
@@ -676,7 +679,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private async evaluateTripRules(): Promise<void> {
-    if (!this.destination || !this.routeDistance || !this.activeVehicle || !this.userPreferences) {
+    if (!this.destination || !this.routeDistance || !this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) {
       this.isAutonomyCritical = false; return;
     }
 
@@ -687,56 +690,65 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     this.isAutonomyCritical = routeKm > safeAutonomy;
 
-    // Use cached stops if they exist and we're actively navigating
+    // Use cached stops if they exist to avoid flicker
     if (this.cachedSmartStops.length > 0) {
       return;
     }
 
+    this.isEvaluatingRules = true;
     this.mapService.clearStopMarkers();
 
-    if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
-      const brandName = this.userPreferences.preferences?.[0]?.brandName || 'Surtidor Compatible';
-      const numStops = Math.max(1, Math.floor(routeKm / (safeAutonomy > 5 ? safeAutonomy : 50)));
+    try {
+      if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
+        const brandName = this.userPreferences.preferences?.[0]?.brandName || 'Estación';
+        const numStops = Math.max(1, Math.floor(routeKm / (safeAutonomy > 5 ? safeAutonomy : 50)));
 
-      if (this.isNavigating && !this.hasShownAutonomyAlert) {
-        this.notificationsService.notifications.update(list => [{
-          id: Math.random().toString(36).substring(7),
-          type: 'smart_stop',
-          timestamp: new Date().toISOString(),
-          title: 'Autonomía Insuficiente',
-          message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km. Sugiriendo paradas en ${brandName}.`,
-          isRead: false
-        }, ...list]);
-        this.hasShownAutonomyAlert = true;
-      }
+        if (this.isNavigating && !this.hasShownAutonomyAlert) {
+          this.notificationsService.notifications.update(list => [{
+            id: Math.random().toString(36).substring(7),
+            type: 'smart_stop',
+            timestamp: new Date().toISOString(),
+            title: 'Autonomía Insuficiente',
+            message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km. Sugiriendo paradas en ${brandName}.`,
+            isRead: false
+          }, ...list]);
+          this.hasShownAutonomyAlert = true;
+        }
 
-      for (let i = 1; i <= numStops; i++) {
-        const ratio = (i * safeAutonomy) / routeKm;
-        const stopIdx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.95));
-        const stopPoint = this.detailedRouteCoords[stopIdx];
-        if (!stopPoint) continue;
+        for (let i = 1; i <= numStops; i++) {
+          const ratio = (i * safeAutonomy) / routeKm;
+          // Calculate point relative to the FULL route, not just the remaining slice
+          // but if we are navigating, detailedRouteCoords is only the REMAINING slice.
+          // This is fine for initial selection.
+          const stopIdx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.95));
+          const stopPoint = this.detailedRouteCoords[stopIdx];
+          if (!stopPoint) continue;
 
-        // REAL SEARCH: Find nearest fuel station near the calculated stop point
-        const stations = await this.findGasStationsNear(stopPoint[1], stopPoint[0], brandName);
-        if (stations && stations.length > 0) {
-          const s = stations[0];
-          const popupHtml = `
-            <div style="font-family:sans-serif; text-align:center;">
-               <strong style="color:var(--primary); font-size:14px;">${s.name || 'Estación de Combustible'}</strong><br>
-               <span style="font-size:12px; color:#555;">${s.brand || brandName}</span><br>
-               <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${s.lon}, lat: ${s.lat}}}))"
-                       style="margin-top:8px; padding:4px 8px; background:var(--primary); color:white; border:none; border-radius:4px; font-size:10px;">Agregar Parada</button>
-            </div>`;
-          this.mapService.setSmartStopMarker(parseFloat(s.lon), parseFloat(s.lat), 'local_gas_station', popupHtml);
-          this.cachedSmartStops.push({ name: s.name, brand: s.brand || brandName, lat: parseFloat(s.lat), lng: parseFloat(s.lon), alerted: false });
-        } else {
-          // Fallback if no real stations found
-          this.mapService.setSmartStopMarker(stopPoint[0], stopPoint[1], 'local_gas_station', `Estación ${brandName} sugerida`);
-          this.cachedSmartStops.push({ name: `Estación ${brandName} sugerida`, brand: brandName, lat: stopPoint[1], lng: stopPoint[0], alerted: false });
+          // REAL SEARCH: Find nearest fuel station near the calculated stop point
+          const stations = await this.findGasStationsNear(stopPoint[1], stopPoint[0], brandName);
+          if (stations && stations.length > 0) {
+            const s = stations[0];
+            const popupHtml = `
+              <div style="font-family:sans-serif; text-align:center;">
+                 <strong style="color:var(--primary); font-size:14px;">${s.name || 'Estación'}</strong><br>
+                 <span style="font-size:12px; color:#555;">${s.brand || brandName}</span><br>
+                 <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${s.lon}, lat: ${s.lat}}}))"
+                         style="margin-top:8px; padding:4px 8px; background:var(--primary); color:white; border:none; border-radius:4px; font-size:10px;">Agregar Parada</button>
+              </div>`;
+            this.mapService.setSmartStopMarker(parseFloat(s.lon), parseFloat(s.lat), 'local_gas_station', popupHtml);
+            this.cachedSmartStops.push({ name: s.name, brand: s.brand || brandName, lat: parseFloat(s.lat), lng: parseFloat(s.lon), alerted: false });
+          } else {
+            // Fallback if no real stations found
+            const fallbackName = `Estación ${brandName} sugerida`;
+            this.mapService.setSmartStopMarker(stopPoint[0], stopPoint[1], 'local_gas_station', fallbackName);
+            this.cachedSmartStops.push({ name: fallbackName, brand: brandName, lat: stopPoint[1], lng: stopPoint[0], alerted: false });
+          }
         }
       }
+    } finally {
+      this.isEvaluatingRules = false;
+      this.cdr.markForCheck();
     }
-    this.cdr.markForCheck();
   }
 
   private async findGasStationsNear(lat: number, lng: number, brand?: string): Promise<any[]> {

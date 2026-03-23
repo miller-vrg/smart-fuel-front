@@ -43,12 +43,12 @@
 
             <div class="vehicle-card__stats">
               <div class="mini-stat">
-                <span class="mini-stat__val">{{ v.fuelCapacityGallons }}</span>
-                <span class="mini-stat__label">Gal</span>
+                <span class="mini-stat__val">{{ getDisplayCapacity(v) }}</span>
+                <span class="mini-stat__label">{{ v.unit === 'liters' ? 'Litros' : 'Gal' }}</span>
               </div>
               <div class="mini-stat">
-                <span class="mini-stat__val">{{ v.avgKmPerGallon }}</span>
-                <span class="mini-stat__label">Km/Gal</span>
+                <span class="mini-stat__val">{{ getDisplayPerformance(v) }}</span>
+                <span class="mini-stat__label">Km/{{ v.unit === 'liters' ? 'L' : 'Gal' }}</span>
               </div>
             </div>
           </div>
