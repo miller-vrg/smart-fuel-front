@@ -171,6 +171,58 @@
   }
 }
 
+/* ── Fuel Detail Overlay ─────────────────────── */
+.fuel-detail {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 20;
+
+  &--visible {
+    transform: translateY(0);
+  }
+
+  &__content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--outline-variant);
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+  }
+
+  &__val {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+
+  &--highlight {
+    border-bottom: none;
+    .detail-row__val {
+      color: var(--primary);
+    }
+  }
+}
+
 /* ── Quick Actions (Matched to Reference) ──────────────── */
 .actions-row {
   display: flex;

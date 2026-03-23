@@ -55,64 +55,77 @@
   }
 }
 
-.vehicle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+.vehicle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.vehicle-card {
+.vehicle-item {
   background: var(--surface-container-low);
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 16px 20px;
   border: 1px solid var(--outline-variant);
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
     background: var(--surface-container);
+    border-color: var(--primary);
   }
 
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
+  &__info {
+    flex: 1;
   }
 
-  &__icon {
-    width: 48px;
-    height: 48px;
-    background: var(--primary-container);
-    color: var(--on-primary-container);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  &__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
 
-    .material-symbols-outlined {
-      font-size: 24px;
-      font-variation-settings: 'FILL' 1;
-    }
+  &__plate {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+  }
+
+  &__stats {
+    display: flex;
+    gap: 16px;
   }
 
   &__actions {
     display: flex;
     gap: 8px;
   }
+}
 
-  &__title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--on-surface);
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 6px 10px;
+  background: var(--surface-container-high);
+  border-radius: 12px;
+  border: 1px solid var(--outline-variant);
+
+  &__val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
   }
 
-  &__plate {
+  &__label {
+    font-size: 0.65rem;
+    font-weight: 700;
     color: var(--on-surface-variant);
-    font-size: 0.875rem;
-    margin: 4px 0 16px 0;
+    text-transform: uppercase;
   }
 }
 

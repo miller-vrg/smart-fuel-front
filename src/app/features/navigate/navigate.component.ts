@@ -1,6 +1,5 @@
 import {
   Component,
-  ChangeDetectionStrategy,
   OnInit,
   OnDestroy,
   ChangeDetectorRef,
@@ -11,30 +10,33 @@ import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs';
 
 import { MapService } from '@core/services/map.service';
-import { PreferencesService } from '@core/services/preferences.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { Preference } from '@core/interfaces/preference.interface';
+import { PreferencesService } from '@core/services/preferences.service';
+import { NotificationsService } from '@core/services/notifications.service';
 import { Vehicle } from '@core/interfaces/vehicle.interface';
 
 import { environment } from '@env/environment';
 import { UserPosition } from './navigate.interfaces';
 
 @Component({
-    selector: 'app-navigate',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    templateUrl: './navigate.component.html',
-    styleUrl: './navigate.component.scss',
-    host:{
-      class: 'navigate-component'
-    }
+  selector: 'app-navigate',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './navigate.component.html',
+  styleUrl: './navigate.component.scss',
+  host: {
+    class: 'navigate-component'
+  }
 })
 export class NavigateComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private prefService = inject(PreferencesService);
   private vehicleService = inject(VehicleService);
   private mapService = inject(MapService);
-  
+
+  private notificationsService = inject(NotificationsService);
+
   private watchId: number | null = null;
   private userPreferences: Preference | null = null;
   activeVehicle: Vehicle | null = null;
@@ -52,7 +54,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   arrivalTime = '--:--';
   routeDistance = '0 km';
   currentSpeed = 0;
-  
+
   showManeuver = false;
   isArrivalBarCondensed = false;
   isAutonomyCritical = false;
@@ -77,11 +79,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
   // Vehicle Selection
   availableVehicles: Vehicle[] = [];
   showVehicleSelector = false;
-  
+
   possibleRoutes: any[] = [];
   selectedRouteIndex = 0;
   showRouteList = false;
-  
+
   showAddVehicleModal = false;
   showSpeedAlert = false;
   newVehicleForm: Partial<Vehicle> = {
@@ -97,7 +99,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   // Store exact polyline array to plot markers ON the route
   detailedRouteCoords: number[][] = [];
-  
+
   // Real-time tracking & Navigation Logic
   private lastPosition: UserPosition | null = null;
   private totalKmTraveled: number = 0;
@@ -105,7 +107,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   private currentRouteSteps: any[] = [];
   private nextStepIndex: number = 0;
   private lastRecalculationTime = 0;
-  
+
   maneuverIcon = 'navigation';
   maneuverDistance = '';
   maneuverStreet = '';
@@ -140,7 +142,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.loadPreferences();
 
     this.mapService.mapClick.subscribe(event => {
-       this.onMapClick(event);
+      this.onMapClick(event);
     });
   }
 
@@ -182,7 +184,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
           heading: pos.coords.heading ?? undefined,
         };
         this.currentSpeed = Math.round((pos.coords.speed ?? 0) * 3.6); // m/s to km/h
-        
+
         const isFirstLocation = !this.locationReady;
         this.locationReady = true;
         this.geoError = null;
@@ -195,7 +197,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
         if (isFirstLocation) {
           this.mapService.flyTo(this.userPosition.lng, this.userPosition.lat, 15);
-          
+
           const savedStr = localStorage.getItem('smartFuel_activeTrip');
           if (savedStr) {
             try {
@@ -203,30 +205,30 @@ export class NavigateComponent implements OnInit, OnDestroy {
               this.destination = state.destination;
               this.destinationName = state.destinationName;
               this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
-              
+
               setTimeout(() => {
                 const vehicle = this.availableVehicles.find(v => v.id === state.vehicleId) || this.activeVehicle;
                 if (state.destination && state.destination.lng) {
-                   this.destination = state.destination;
-                   this.destinationName = state.destinationName || 'Destino';
-                   this.mapService.setDestinationMarker(this.destination?.lng as number, this.destination?.lat as number);
-                   
-                   if (this.userPosition && this.destination) {
-                      this.calculateRoute(this.userPosition, this.destination).then(() => {
-                         if (state.selectedRouteIndex !== undefined) {
-                            this.selectRouteIndex(state.selectedRouteIndex);
-                         }
-                         if (state.isNavigating) {
-                            this.isNavigating = true;
-                            this.showRouteList = false;
-                            this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
-                         } else {
-                            this.showRouteList = true;
-                         }
-                         if (vehicle) this.confirmVehicle(vehicle);
-                         this.cdr.markForCheck();
-                      });
-                   }
+                  this.destination = state.destination;
+                  this.destinationName = state.destinationName || 'Destino';
+                  this.mapService.setDestinationMarker(this.destination?.lng as number, this.destination?.lat as number);
+
+                  if (this.userPosition && this.destination) {
+                    this.calculateRoute(this.userPosition, this.destination).then(() => {
+                      if (state.selectedRouteIndex !== undefined) {
+                        this.selectRouteIndex(state.selectedRouteIndex);
+                      }
+                      if (state.isNavigating) {
+                        this.isNavigating = true;
+                        this.showRouteList = false;
+                        this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
+                      } else {
+                        this.showRouteList = true;
+                      }
+                      if (vehicle) this.confirmVehicle(vehicle);
+                      this.cdr.markForCheck();
+                    });
+                  }
                 }
               }, 500);
             } catch (e) {
@@ -234,7 +236,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
             }
           }
         }
-        
+
         this.lastPosition = this.userPosition;
         this.cdr.markForCheck();
       },
@@ -268,12 +270,12 @@ export class NavigateComponent implements OnInit, OnDestroy {
         this.totalKmTraveled += deltaKm;
         const gallonsConsumed = deltaKm / (this.activeVehicle.avgKmPerGallon || 30);
         this.activeVehicle.currentFuelGallons = Math.max(0, this.activeVehicle.currentFuelGallons! - gallonsConsumed);
-        
+
         if (this.totalKmTraveled - this.lastKmUpdate >= 1) {
-           this.lastKmUpdate = this.totalKmTraveled;
-           this.vehicleService.updateVehicle(this.activeVehicle.id, { 
-             currentFuelGallons: this.activeVehicle.currentFuelGallons 
-           }).subscribe();
+          this.lastKmUpdate = this.totalKmTraveled;
+          this.vehicleService.updateVehicle(this.activeVehicle.id, {
+            currentFuelGallons: this.activeVehicle.currentFuelGallons
+          }).subscribe();
         }
       }
 
@@ -288,11 +290,18 @@ export class NavigateComponent implements OnInit, OnDestroy {
           }
         }
       });
-      
+
       // Low fuel alert (< 15%)
       if (this.fuelLevelPercent < 15 && !this.hasShownLowFuelAlert) {
-         this.hasShownLowFuelAlert = true;
-         setTimeout(() => alert(`⛽ Nivel de combustible bajo (${this.fuelLevelPercent.toFixed(0)}%). Busca una estación próxima.`), 0);
+        this.hasShownLowFuelAlert = true;
+        this.notificationsService.notifications.update(list => [{
+          id: Math.random().toString(36).substring(7),
+          type: 'anomaly_alert',
+          timestamp: new Date(),
+          title: 'Combustible Crítico',
+          message: `Nivel de combustible al ${this.fuelLevelPercent.toFixed(0)}%. Busca una estación próxima.`,
+          isRead: false
+        }, ...list]);
       }
     }
 
@@ -303,10 +312,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
       const distToStep = this.calculateDistance(currentPos, stepCoord) * 1000;
 
       const icon = this.getManeuverIcon(step.maneuver.type, step.maneuver.modifier);
-      const distText = distToStep > 1000 
-        ? `${(distToStep / 1000).toFixed(1)} km` 
+      const distText = distToStep > 1000
+        ? `${(distToStep / 1000).toFixed(1)} km`
         : `${Math.round(distToStep)} m`;
-      
+
       this.updateManeuver({
         icon,
         distance: distText,
@@ -324,27 +333,27 @@ export class NavigateComponent implements OnInit, OnDestroy {
     let closestIdx = -1;
 
     if (this.detailedRouteCoords.length > 1) {
-       const searchRange = Math.min(20, this.detailedRouteCoords.length - 1);
-       for (let i = 0; i < searchRange; i++) {
-          const d = this.distanceToSegment(currentPos, this.detailedRouteCoords[i] as any, this.detailedRouteCoords[i + 1] as any);
-          if (d < minLineDist) {
-             minLineDist = d;
-             closestIdx = i;
-          }
-       }
+      const searchRange = Math.min(20, this.detailedRouteCoords.length - 1);
+      for (let i = 0; i < searchRange; i++) {
+        const d = this.distanceToSegment(currentPos, this.detailedRouteCoords[i] as any, this.detailedRouteCoords[i + 1] as any);
+        if (d < minLineDist) {
+          minLineDist = d;
+          closestIdx = i;
+        }
+      }
 
-       if (closestIdx > 0 && minLineDist < 0.04) { // User is on the route
-          this.detailedRouteCoords = this.detailedRouteCoords.slice(closestIdx);
-          this.mapService.updateRouteData(this.detailedRouteCoords);
-       }
+      if (closestIdx > 0 && minLineDist < 0.04) { // User is on the route
+        this.detailedRouteCoords = this.detailedRouteCoords.slice(closestIdx);
+        this.mapService.updateRouteData(this.detailedRouteCoords);
+      }
     }
 
     // Recalculate if off-route (> 40m)
     if (now - this.lastRecalculationTime > 10000 && minLineDist > 0.04) {
-       this.lastRecalculationTime = now;
-       this.calculateRoute(currentPos, this.destination).then(() => {
-          this.executeTripLogic();
-       });
+      this.lastRecalculationTime = now;
+      this.calculateRoute(currentPos, this.destination).then(() => {
+        this.executeTripLogic();
+      });
     }
 
     this.monitorSpeed();
@@ -372,8 +381,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
     const dLon = (p2.lng - p1.lng) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -442,13 +451,13 @@ export class NavigateComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.userPosition || this.isNavigating || (!fromSearch && this.possibleRoutes.length > 0)) return;
-    
+
     this.searchResults = [];
     if (!fromSearch) {
       this.destinationName = 'Destino seleccionado';
       this.searchQuery = '';
     }
-    
+
     this.destination = { lng: event.lng, lat: event.lat };
     this.mapService.setDestinationMarker(event.lng, event.lat);
     await this.calculateRoute(this.userPosition, this.destination);
@@ -463,25 +472,25 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
       if (data.code === 'Ok' && data.routes.length > 0) {
         this.possibleRoutes = data.routes.map((r: any, i: number) => {
-           let stops = 0;
-           if (this.activeVehicle && this.userPreferences) {
-              const km = r.distance / 1000;
-              const autonomy = (this.activeVehicle.currentFuelGallons * this.activeVehicle.avgKmPerGallon) || 300;
-              const safeAuto = autonomy - (this.userPreferences.notifyGasStationKmBefore ?? 20);
-              stops = Math.floor(km / (safeAuto > 5 ? safeAuto : 50));
-           }
-           
-            return {
-              index: i,
-              duration: r.duration,
-              formattedDuration: this.formatDuration(r.duration),
-              distance: r.distance,
-              geometry: r.geometry,
-              summary: r.legs?.[0]?.summary || (i === 0 ? 'Ruta Principal' : `Ruta Alternativa ${i}`),
-              stopsRequired: Math.max(0, stops),
-              steps: r.legs?.[0]?.steps || []
-            };
-         });
+          let stops = 0;
+          if (this.activeVehicle && this.userPreferences) {
+            const km = r.distance / 1000;
+            const autonomy = (this.activeVehicle.currentFuelGallons * this.activeVehicle.avgKmPerGallon) || 300;
+            const safeAuto = autonomy - (this.userPreferences.notifyGasStationKmBefore ?? 20);
+            stops = Math.floor(km / (safeAuto > 5 ? safeAuto : 50));
+          }
+
+          return {
+            index: i,
+            duration: r.duration,
+            formattedDuration: this.formatDuration(r.duration),
+            distance: r.distance,
+            geometry: r.geometry,
+            summary: r.legs?.[0]?.summary || (i === 0 ? 'Ruta Principal' : `Ruta Alternativa ${i}`),
+            stopsRequired: Math.max(0, stops),
+            steps: r.legs?.[0]?.steps || []
+          };
+        });
 
         this.showRouteList = true;
         this.selectRouteIndex(0);
@@ -492,36 +501,36 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   selectRouteIndex(index: number): void {
-     this.selectedRouteIndex = index;
-     const route = this.possibleRoutes[index];
-     const mins = Math.ceil(route.duration / 60);
-     const arrivalDate = new Date();
-     arrivalDate.setMinutes(arrivalDate.getMinutes() + mins);
-     this.arrivalTime = arrivalDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-     this.routeDistance = `${Math.round(route.distance / 1000)}`;
-     this.eta = mins;
-     
-     this.mapService.clearRouteAndMarkers();
-     this.cachedSmartStops = []; // Reset markers caching for the new route
-     this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
-     
-     this.detailedRouteCoords = route.geometry.coordinates;
-     this.currentRouteSteps = route.steps;
-     this.nextStepIndex = 0;
-     this.mapService.drawRoute(this.detailedRouteCoords);
-     
-     if (this.currentRouteSteps.length > 0) {
-        const step = this.currentRouteSteps[0];
-        this.updateManeuver({ 
-            icon: this.getManeuverIcon(step.maneuver.type, step.maneuver.modifier), 
-            distance: '0 m', 
-            street: step.name || step.maneuver.instruction 
-        });
-     }
+    this.selectedRouteIndex = index;
+    const route = this.possibleRoutes[index];
+    const mins = Math.ceil(route.duration / 60);
+    const arrivalDate = new Date();
+    arrivalDate.setMinutes(arrivalDate.getMinutes() + mins);
+    this.arrivalTime = arrivalDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    this.routeDistance = `${Math.round(route.distance / 1000)}`;
+    this.eta = mins;
 
-     this.evaluateTripRules();
-     this.saveTripState();
-     this.cdr.markForCheck();
+    this.mapService.clearRouteAndMarkers();
+    this.cachedSmartStops = []; // Reset markers caching for the new route
+    this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
+
+    this.detailedRouteCoords = route.geometry.coordinates;
+    this.currentRouteSteps = route.steps;
+    this.nextStepIndex = 0;
+    this.mapService.drawRoute(this.detailedRouteCoords);
+
+    if (this.currentRouteSteps.length > 0) {
+      const step = this.currentRouteSteps[0];
+      this.updateManeuver({
+        icon: this.getManeuverIcon(step.maneuver.type, step.maneuver.modifier),
+        distance: '0 m',
+        street: step.name || step.maneuver.instruction
+      });
+    }
+
+    this.evaluateTripRules();
+    this.saveTripState();
+    this.cdr.markForCheck();
   }
 
   private getManeuverIcon(type: string, modifier?: string): string {
@@ -538,21 +547,21 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private saveTripState(): void {
-     if (!this.destination) {
-        localStorage.removeItem('smartFuel_activeTrip');
-        return;
-     }
-     const state = {
-        destination: this.destination,
-        destinationName: this.destinationName,
-        vehicleId: this.activeVehicle?.id,
-        selectedRouteIndex: this.selectedRouteIndex,
-        isNavigating: this.isNavigating
-     };
-     localStorage.setItem('smartFuel_activeTrip', JSON.stringify(state));
-     if (this.activeVehicle && this.isNavigating) {
-        this.vehicleService.saveActiveTrip(this.activeVehicle.id, state).subscribe();
-     }
+    if (!this.destination) {
+      localStorage.removeItem('smartFuel_activeTrip');
+      return;
+    }
+    const state = {
+      destination: this.destination,
+      destinationName: this.destinationName,
+      vehicleId: this.activeVehicle?.id,
+      selectedRouteIndex: this.selectedRouteIndex,
+      isNavigating: this.isNavigating
+    };
+    localStorage.setItem('smartFuel_activeTrip', JSON.stringify(state));
+    if (this.activeVehicle && this.isNavigating) {
+      this.vehicleService.saveActiveTrip(this.activeVehicle.id, state).subscribe();
+    }
   }
 
   openRouteList(): void {
@@ -586,10 +595,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   startNavigationFromAlternative(evt: Event, index: number): void {
-     evt.stopPropagation();
-     this.selectRouteIndex(index);
-     if (!this.activeVehicle) this.showVehicleSelector = true;
-     else this.executeTripLogic();
+    evt.stopPropagation();
+    this.selectRouteIndex(index);
+    if (!this.activeVehicle) this.showVehicleSelector = true;
+    else this.executeTripLogic();
   }
 
   zoomIn(): void { this.mapService.zoomIn(); }
@@ -613,13 +622,13 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.prefService.getByVehicle(vehicle.id).pipe(take(1)).subscribe(pref => {
       this.userPreferences = pref;
       if (this.destination && this.possibleRoutes.length > 0) {
-         this.selectRouteIndex(this.selectedRouteIndex);
-         this.possibleRoutes.forEach(r => {
-            const km = r.distance / 1000;
-            const autonomy = (this.activeVehicle?.currentFuelGallons ?? 0) * (this.activeVehicle?.avgKmPerGallon ?? 0) || 300;
-            const safeAuto = autonomy - (this.userPreferences?.notifyGasStationKmBefore ?? 20);
-            r.stopsRequired = Math.max(0, Math.floor(km / (safeAuto > 5 ? safeAuto : 50)));
-         });
+        this.selectRouteIndex(this.selectedRouteIndex);
+        this.possibleRoutes.forEach(r => {
+          const km = r.distance / 1000;
+          const autonomy = (this.activeVehicle?.currentFuelGallons ?? 0) * (this.activeVehicle?.avgKmPerGallon ?? 0) || 300;
+          const safeAuto = autonomy - (this.userPreferences?.notifyGasStationKmBefore ?? 20);
+          r.stopsRequired = Math.max(0, Math.floor(km / (safeAuto > 5 ? safeAuto : 50)));
+        });
       }
       this.hasShownAutonomyAlert = false; // Reset on vehicle change
       if (this.isNavigating) this.executeTripLogic();
@@ -665,27 +674,29 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const routeKm = parseFloat(this.routeDistance);
     const safeAutonomy = autonomy - kmBefore;
-    
+
     this.isAutonomyCritical = routeKm > safeAutonomy;
 
     // Use cached stops if they exist and we're actively navigating
     if (this.cachedSmartStops.length > 0) {
-      return; 
+      return;
     }
-    
+
     this.mapService.clearStopMarkers();
 
     if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
       const brandName = this.userPreferences.preferences?.[0]?.brandName || 'Surtidor Compatible';
       const numStops = Math.max(1, Math.floor(routeKm / (safeAutonomy > 5 ? safeAutonomy : 50)));
-      
+
       if (this.isNavigating && !this.hasShownAutonomyAlert) {
-        this.tripAlertData = {
-          title: '¡Atención! Autonomía Baja',
-          message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km.`,
-          detail: `Pautaremos paradas de recarga en ${brandName}.`
-        };
-        this.showTripAlertModal = true;
+        this.notificationsService.notifications.update(list => [{
+          id: Math.random().toString(36).substring(7),
+          type: 'smart_stop',
+          timestamp: new Date(),
+          title: 'Autonomía Insuficiente',
+          message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km. Sugiriendo paradas en ${brandName}.`,
+          isRead: false
+        }, ...list]);
         this.hasShownAutonomyAlert = true;
       }
 
@@ -703,7 +714,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
             <div style="font-family:sans-serif; text-align:center;">
                <strong style="color:var(--primary); font-size:14px;">${s.name || 'Estación de Combustible'}</strong><br>
                <span style="font-size:12px; color:#555;">${s.brand || brandName}</span><br>
-               <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${s.lon}, lat: ${s.lat}}}))" 
+               <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${s.lon}, lat: ${s.lat}}}))"
                        style="margin-top:8px; padding:4px 8px; background:var(--primary); color:white; border:none; border-radius:4px; font-size:10px;">Agregar Parada</button>
             </div>`;
           this.mapService.setSmartStopMarker(parseFloat(s.lon), parseFloat(s.lat), 'local_gas_station', popupHtml);
@@ -733,8 +744,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
     if (!this.userPreferences?.maxSpeedLimit || !this.isNavigating) return;
     if (this.currentSpeed >= this.userPreferences.maxSpeedLimit) {
       if (!this.showSpeedAlert) {
-         this.showSpeedAlert = true;
-         setTimeout(() => { this.showSpeedAlert = false; this.cdr.markForCheck(); }, 3000);
+        this.showSpeedAlert = true;
+        setTimeout(() => { this.showSpeedAlert = false; this.cdr.markForCheck(); }, 3000);
       }
     } else this.showSpeedAlert = false;
   }

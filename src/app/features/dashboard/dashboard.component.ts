@@ -24,6 +24,7 @@ export class DashboardComponent implements OnInit {
   authService = inject(AuthService);
 
   showRefillModal = false;
+  showFuelDetail = false;
 
   readonly userName = computed(() => this.authService.currentUser()?.name || 'User');
   

@@ -23,7 +23,7 @@
 
     <!-- Fuel Gauge Card -->
     @if (data.range) {
-      <div class="fuel-card">
+      <div class="fuel-card" (click)="showFuelDetail = !showFuelDetail">
         <div class="fuel-card__info">
           <p class="fuel-card__label">Current Range</p>
           <p class="fuel-card__value">{{ data.range.safeRangeKm | number:'1.0-0' }}<span class="fuel-card__unit">km</span></p>
@@ -39,6 +39,28 @@
           <div class="fuel-knob__center">
             <span class="fuel-knob__value">{{ data.range.fuelLevelPercent | number:'1.0-0' }}%</span>
             <span class="fuel-knob__label">Full</span>
+          </div>
+        </div>
+
+        <!-- Fuel Detail Overlay -->
+        <div class="fuel-detail" [class.fuel-detail--visible]="showFuelDetail">
+          <div class="fuel-detail__content">
+            <div class="detail-row">
+              <span class="detail-row__label">Tanque Total</span>
+              <span class="detail-row__val">{{ data.vehicle?.fuelCapacityGallons | number:'1.1-1' }} Gal</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Combustible Actual</span>
+              <span class="detail-row__val">{{ data.vehicle?.currentFuelGallons | number:'1.1-1' }} Gal</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Rendimiento Promedio</span>
+              <span class="detail-row__val">{{ data.vehicle?.avgKmPerGallon | number:'1.1-1' }} Km/Gal</span>
+            </div>
+            <div class="detail-row detail-row--highlight">
+              <span class="detail-row__label">Reserva de Seguridad</span>
+              <span class="detail-row__val">{{ (data.vehicle?.safetyBuffer || 0.15) * 100 }}%</span>
+            </div>
           </div>
         </div>
       </div>

@@ -170,9 +170,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       this.userMarker.setLngLat([lng, lat]);
       // Optional: rotate the inner dot if heading is provided
       if (heading !== undefined && heading !== null && !isNaN(heading)) {
-         const el = this.userMarker.getElement();
-         const dot = el.querySelector('.user-marker-dot') as HTMLElement;
-         if (dot) dot.style.transform = `rotate(${heading}deg)`;
+        const el = this.userMarker.getElement();
+        const dot = el.querySelector('.user-marker-dot') as HTMLElement;
+        if (dot) dot.style.transform = `rotate(${heading}deg)`;
       }
       return;
     }
@@ -190,7 +190,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     this.userMarker = new maplibregl.Marker({ element: el })
       .setLngLat([lng, lat])
       .addTo(this.map);
-      
+
     // Ensure it's on top of tiles
     this.userMarker.getElement().style.zIndex = '150';
   }
@@ -216,32 +216,32 @@ export class MapComponent implements AfterViewInit, OnDestroy {
    */
   setSmartStopMarker(lng: number, lat: number, iconName: string = 'location_on', popupHtml?: string): void {
     if (!this.map) return;
-    
+
     const el = document.createElement('div');
     el.style.zIndex = '100'; // always on top of route line
     el.innerHTML = `<div style="background:var(--primary-container); color:var(--on-primary-container); border-radius:50%; padding:8px; display:flex; box-shadow:0 2px 6px rgba(0,0,0,0.2); cursor:pointer;"><span class="material-symbols-outlined" style="font-size:18px;">${iconName}</span></div>`;
-    
+
     // Evitar que el mapa lance el evento click y cambie la ruta
     el.addEventListener('click', (e) => {
       e.stopPropagation();
     });
 
     const m = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]);
-      
+
     if (popupHtml) {
       const popup = new maplibregl.Popup({ offset: 25, closeButton: false, closeOnClick: false }).setHTML(popupHtml);
-      
+
       el.addEventListener('mouseenter', () => popup.setLngLat([lng, lat]).addTo(this.map!));
       el.addEventListener('mouseleave', () => popup.remove());
-      
+
       // Keep click toggle just in case on mobile
       el.addEventListener('click', (e) => {
-         e.stopPropagation();
-         if (popup.isOpen()) popup.remove();
-         else popup.setLngLat([lng, lat]).addTo(this.map!);
+        e.stopPropagation();
+        if (popup.isOpen()) popup.remove();
+        else popup.setLngLat([lng, lat]).addTo(this.map!);
       });
     }
-      
+
     m.addTo(this.map);
     this.smartStopMarkers.push(m);
   }
@@ -252,13 +252,23 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       this.destMarker = null;
     }
     this.clearStopMarkers();
-    
+
     if (this.map?.getSource('route-source')) {
       (this.map.getSource('route-source') as any).setData({
         type: 'Feature',
         properties: {},
         geometry: { type: 'LineString', coordinates: [] }
       });
+    }
+
+    if (this.map?.getLayer('route-casing')) {
+      this.map.removeLayer('route-casing');
+    }
+    if (this.map?.getLayer('route-layer')) {
+      this.map.removeLayer('route-layer');
+    }
+    if (this.map?.getSource('route-source')) {
+      this.map.removeSource('route-source');
     }
   }
 
@@ -318,10 +328,23 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         },
         paint: {
           'line-color': '#4285F4',
-          'line-width': 6,
+          'line-width': 8,
           'line-opacity': 0.8,
         },
       });
+
+      // Add a border/casing for the route line to make it pop
+      this.map.addLayer({
+        id: 'route-casing',
+        type: 'line',
+        source: sourceId,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#2b58a1',
+          'line-width': 12,
+          'line-opacity': 0.3,
+        }
+      }, layerId);
     }
   }
 }

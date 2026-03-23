@@ -7,26 +7,26 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { Vehicle } from '@core/interfaces/vehicle.interface';
 
 @Component({
-    selector: 'app-vehicles',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    templateUrl: './vehicles.component.html',
-    styleUrl: './vehicles.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-vehicles',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './vehicles.component.html',
+  styleUrl: './vehicles.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VehiclesComponent implements OnInit {
   private vehicleService = inject(VehicleService);
 
   vehicles$ = new BehaviorSubject<Vehicle[]>([]);
   isLoading$ = new BehaviorSubject<boolean>(false);
-  
+
   showModal = false;
   editingVehicle: Partial<Vehicle> | null = null;
-  
+
   // UI States using Signals for reliable OnPush updates
   isSaving = signal(false);
   showSuccess = signal(false);
-  
+
   // Form fields
   form: Partial<Vehicle> = this.resetForm();
   inputUnit: 'liters' | 'gallons' = 'liters';
@@ -35,7 +35,7 @@ export class VehiclesComponent implements OnInit {
 
   ngOnInit() {
     this.loadVehicles();
-    
+
     // Refresh list when global data is refreshed
     this.vehicleService.dataRefreshed$.subscribe(() => {
       this.loadVehicles();
@@ -57,16 +57,16 @@ export class VehiclesComponent implements OnInit {
 
     if (this.inputUnit === 'gallons') {
       // From Liters to Gallons
-      if (this.form.fuelCapacityGallons) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons / this.GAL_TO_L);
-      if (this.form.currentFuelGallons) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons / this.GAL_TO_L);
-      if (this.form.avgKmPerGallon) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon * this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons / this.GAL_TO_L);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons / this.GAL_TO_L);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon * this.GAL_TO_L);
     } else {
       // From Gallons to Liters
-      if (this.form.fuelCapacityGallons) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
     }
-    
+
     this.previousUnit = this.inputUnit;
   }
 
@@ -81,35 +81,35 @@ export class VehiclesComponent implements OnInit {
     this.previousUnit = 'liters';
     this.isSaving.set(false);
     this.showSuccess.set(false);
-    
+
     // resetForm returns gallons, so we convert initial defaults to liters if needed
     if (this.inputUnit === 'liters') {
-      if (this.form.fuelCapacityGallons) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
     }
-    
+
     this.toggleModal(true);
   }
 
   openEditModal(vehicle: Vehicle) {
     this.editingVehicle = { ...vehicle };
     this.form = { ...vehicle };
-    
+
     // Set unit from vehicle data or default to liters
-    this.inputUnit = vehicle.unit || 'liters';
+    this.inputUnit = (vehicle.unit as 'liters' | 'gallons') || 'liters';
     this.previousUnit = this.inputUnit;
-    
+
     this.isSaving.set(false);
     this.showSuccess.set(false);
 
     // Backend stores as Gallons. Convert to user's preferred unit for editing.
     if (this.inputUnit === 'liters') {
-      if (this.form.fuelCapacityGallons) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
     }
-    
+
     this.toggleModal(true);
   }
 
@@ -130,18 +130,18 @@ export class VehiclesComponent implements OnInit {
 
     const dataToSave = { ...this.form };
     dataToSave.unit = this.inputUnit;
-    
+
     // If input was in Liters, convert everything back to Gallons for DB consistency
     if (this.inputUnit === 'liters') {
-      if (dataToSave.fuelCapacityGallons) dataToSave.fuelCapacityGallons /= this.GAL_TO_L;
-      if (dataToSave.currentFuelGallons) dataToSave.currentFuelGallons /= this.GAL_TO_L;
-      if (dataToSave.avgKmPerGallon) dataToSave.avgKmPerGallon *= this.GAL_TO_L;
+      if (dataToSave.fuelCapacityGallons !== undefined) dataToSave.fuelCapacityGallons /= this.GAL_TO_L;
+      if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons /= this.GAL_TO_L;
+      if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon /= this.GAL_TO_L; // FIXED: Changed *= to /= for Liters -> Gallons (Km/L to Km/Gal)
     }
 
     // Strict rounding to 2 decimals before saving
-    if (dataToSave.fuelCapacityGallons) dataToSave.fuelCapacityGallons = this.round(dataToSave.fuelCapacityGallons);
-    if (dataToSave.currentFuelGallons) dataToSave.currentFuelGallons = this.round(dataToSave.currentFuelGallons);
-    if (dataToSave.avgKmPerGallon) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon);
+    if (dataToSave.fuelCapacityGallons !== undefined) dataToSave.fuelCapacityGallons = this.round(dataToSave.fuelCapacityGallons);
+    if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons = this.round(dataToSave.currentFuelGallons);
+    if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon);
 
     // Remove ID from payload for PATCH
     const { id, ...cleanData } = dataToSave as any;

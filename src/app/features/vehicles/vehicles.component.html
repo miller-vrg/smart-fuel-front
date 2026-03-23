@@ -17,37 +17,32 @@
         Cargando vehículos...
       </div>
     } @else {
-      <div class="vehicle-grid">
+      <div class="vehicle-list">
         @for(v of (vehicles$ | async); track v.id) {
-          <div class="vehicle-card">
-            <div class="vehicle-card__header">
-              <div class="vehicle-card__icon">
-                <span class="material-symbols-outlined">directions_car</span>
-              </div>
-              <div class="vehicle-card__actions">
-                <button class="action-btn" (click)="openEditModal(v)">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button class="action-btn action-btn--danger" (click)="deleteVehicle(v.id)">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
+          <div class="vehicle-item">
+            <div class="vehicle-item__info">
+              <h3 class="vehicle-item__title">{{ v.brand }} {{ v.model }}</h3>
+              <p class="vehicle-item__plate">{{ v.licensePlate }} • {{ v.year }}</p>
             </div>
             
-            <div class="vehicle-card__body">
-              <h3 class="vehicle-card__title">{{ v.brand }} {{ v.model }}</h3>
-              <p class="vehicle-card__plate">{{ v.licensePlate }} • {{ v.year }}</p>
-              
-              <div class="vehicle-stats">
-                <div class="stat-item">
-                  <span class="stat-item__label">Capacidad</span>
-                  <span class="stat-item__val">{{ v.fuelCapacityGallons }} Gal</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-item__label">Rendimiento</span>
-                  <span class="stat-item__val">{{ v.avgKmPerGallon }} Km/Gal</span>
-                </div>
+            <div class="vehicle-item__stats">
+              <div class="mini-stat">
+                <span class="mini-stat__val">{{ v.fuelCapacityGallons }}</span>
+                <span class="mini-stat__label">Gal</span>
               </div>
+              <div class="mini-stat">
+                <span class="mini-stat__val">{{ v.avgKmPerGallon }}</span>
+                <span class="mini-stat__label">Km/Gal</span>
+              </div>
+            </div>
+
+            <div class="vehicle-item__actions">
+              <button class="action-btn" (click)="openEditModal(v)">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="action-btn action-btn--danger" (click)="deleteVehicle(v.id)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
             </div>
           </div>
         } @empty {
