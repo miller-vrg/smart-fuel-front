@@ -129,9 +129,13 @@
 /* ── Page Content ────────────────────────────────── */
 .page-content {
   position: fixed;
-  inset: 0;
+  top: 72px; /* Header height offset */
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 10;
   pointer-events: none;
+  overflow-y: auto; /* Enable page scroll */
 
   ::ng-deep router-outlet {
     display: none;
@@ -139,9 +143,10 @@
 
   ::ng-deep router-outlet ~ * {
     display: block;
-    position: absolute;
-    inset: 0;
+    position: relative; /* Changed from absolute to allow scrolling */
+    min-height: 100%;
     pointer-events: auto;
+    padding-bottom: 32px; /* Bottom spacing */
   }
 }
 

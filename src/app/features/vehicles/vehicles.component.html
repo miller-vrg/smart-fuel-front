@@ -68,7 +68,7 @@
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
         
         <form class="vehicle-form" (submit)="saveVehicle()">
-          <div class="modal-body">
+          <div class="modal-body form-scroll-container">
             <div class="form-group">
               <label>Unidad de Medida</label>
               <select [(ngModel)]="inputUnit" name="unit" (change)="onUnitChange()">

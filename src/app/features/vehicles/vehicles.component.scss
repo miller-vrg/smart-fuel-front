@@ -206,19 +206,24 @@
 }
 
 .modal-body {
-  max-height: 60vh;
+  max-height: 50vh; /* Slightly smaller to ensure buttons are visible */
   overflow-y: auto;
-  padding-right: 8px;
+  padding: 4px 12px 4px 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--surface-container-low);
+    border-radius: 10px;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--outline-variant);
+    background: var(--primary);
     border-radius: 10px;
+    border: 2px solid var(--surface-container-low);
   }
 }
 

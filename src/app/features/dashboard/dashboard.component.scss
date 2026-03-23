@@ -62,50 +62,35 @@
 
 .fuel-card {
   background: var(--surface-variant);
-  border-radius: 32px;
-  padding: 32px;
+  border-radius: 28px;
+  padding: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: var(--on-surface-variant);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.12);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -20%;
-    width: 100%;
-    height: 200%;
-    background: radial-gradient(circle at center, rgba(143, 246, 208, 0.1) 0%, transparent 70%);
-  }
-
-  &__info {
-    position: relative;
-    z-index: 1;
-  }
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 
   &__label {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.8;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
   }
 
   &__value {
-    margin: 8px 0;
-    font-size: 4rem;
+    margin: 4px 0;
+    font-size: 3rem; /* Reduced from 4rem */
     font-weight: 800;
     color: var(--on-surface);
     line-height: 1;
   }
 
   &__unit {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-left: 4px;
     opacity: 0.6;
