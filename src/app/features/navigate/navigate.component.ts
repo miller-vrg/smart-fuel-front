@@ -683,66 +683,100 @@ export class NavigateComponent implements OnInit, OnDestroy {
       this.isAutonomyCritical = false; return;
     }
 
-    const autonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
+    const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
+    const fullAutonomy = (this.activeVehicle.fuelCapacityGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const routeKm = parseFloat(this.routeDistance);
-    const safeAutonomy = autonomy - kmBefore;
+    
+    // Autonomía "segura" actual
+    const safeCurrentAutonomy = currentAutonomy - kmBefore;
+    
+    // Es crítico si la ruta es más larga que lo que tenemos ahora menos el margen
+    this.isAutonomyCritical = routeKm > safeCurrentAutonomy;
 
-    this.isAutonomyCritical = routeKm > safeAutonomy;
-
-    // Use cached stops if they exist to avoid flicker
-    if (this.cachedSmartStops.length > 0) {
-      return;
-    }
+    // Si ya tenemos paradas calculadas para esta ruta, no repetimos el proceso
+    if (this.cachedSmartStops.length > 0) return;
 
     this.isEvaluatingRules = true;
     this.mapService.clearStopMarkers();
 
     try {
       if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
-        const brandName = this.userPreferences.preferences?.[0]?.brandName || 'Estación';
-        const numStops = Math.max(1, Math.floor(routeKm / (safeAutonomy > 5 ? safeAutonomy : 50)));
+        const brandPreference = this.userPreferences.preferences?.[0]?.brandName;
+        
+        // Calcular puntos de parada
+        // 1. La primera parada debe ser antes de agotar el combustible actual
+        // 2. Las siguientes paradas se calculan asumiendo tanque lleno
+        let stopsCoords: number[][] = [];
+        
+        // Primera parada (distancia actual segura)
+        let accumulatedKm = Math.max(5, safeCurrentAutonomy);
+        
+        while (accumulatedKm < routeKm) {
+          const ratio = accumulatedKm / routeKm;
+          const idx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.98));
+          stopsCoords.push(this.detailedRouteCoords[idx]);
+          
+          // Siguiente parada será después de un tanque lleno (menos el margen)
+          accumulatedKm += (fullAutonomy - kmBefore);
+          
+          // Evitar bucles infinitos si la autonomía es muy baja
+          if (fullAutonomy <= kmBefore) break; 
+        }
 
-        if (this.isNavigating && !this.hasShownAutonomyAlert) {
+        if (this.isNavigating && !this.hasShownAutonomyAlert && stopsCoords.length > 0) {
           this.notificationsService.notifications.update(list => [{
             id: Math.random().toString(36).substring(7),
             type: 'smart_stop',
             timestamp: new Date().toISOString(),
             title: 'Autonomía Insuficiente',
-            message: `Ruta: ${Math.round(routeKm)}km, Tanque: ~${Math.round(autonomy)}km. Sugiriendo paradas en ${brandName}.`,
+            message: `Tu combustible actual (~${Math.round(currentAutonomy)}km) no alcanza para la ruta (${Math.round(routeKm)}km). Sugiriendo ${stopsCoords.length} paradas.`,
             isRead: false
           }, ...list]);
           this.hasShownAutonomyAlert = true;
         }
 
-        for (let i = 1; i <= numStops; i++) {
-          const ratio = (i * safeAutonomy) / routeKm;
-          // Calculate point relative to the FULL route, not just the remaining slice
-          // but if we are navigating, detailedRouteCoords is only the REMAINING slice.
-          // This is fine for initial selection.
-          const stopIdx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.95));
-          const stopPoint = this.detailedRouteCoords[stopIdx];
-          if (!stopPoint) continue;
-
-          // REAL SEARCH: Find nearest fuel station near the calculated stop point
-          const stations = await this.findGasStationsNear(stopPoint[1], stopPoint[0], brandName);
+        for (const coord of stopsCoords) {
+          // Búsqueda real de estaciones cerca de este punto de la ruta
+          const stations = await this.findGasStationsNear(coord[1], coord[0], brandPreference);
+          
+          let stationToMark;
           if (stations && stations.length > 0) {
-            const s = stations[0];
-            const popupHtml = `
-              <div style="font-family:sans-serif; text-align:center;">
-                 <strong style="color:var(--primary); font-size:14px;">${s.name || 'Estación'}</strong><br>
-                 <span style="font-size:12px; color:#555;">${s.brand || brandName}</span><br>
-                 <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${s.lon}, lat: ${s.lat}}}))"
-                         style="margin-top:8px; padding:4px 8px; background:var(--primary); color:white; border:none; border-radius:4px; font-size:10px;">Agregar Parada</button>
-              </div>`;
-            this.mapService.setSmartStopMarker(parseFloat(s.lon), parseFloat(s.lat), 'local_gas_station', popupHtml);
-            this.cachedSmartStops.push({ name: s.name, brand: s.brand || brandName, lat: parseFloat(s.lat), lng: parseFloat(s.lon), alerted: false });
+            stationToMark = stations[0];
           } else {
-            // Fallback if no real stations found
-            const fallbackName = `Estación ${brandName} sugerida`;
-            this.mapService.setSmartStopMarker(stopPoint[0], stopPoint[1], 'local_gas_station', fallbackName);
-            this.cachedSmartStops.push({ name: fallbackName, brand: brandName, lat: stopPoint[1], lng: stopPoint[0], alerted: false });
+            // Fallback: Si no hay resultados de la API, usamos el punto de la ruta
+            stationToMark = {
+              name: brandPreference ? `Estación ${brandPreference}` : 'Estación de Servicio',
+              brand: brandPreference || 'Combustible',
+              lat: coord[1].toString(),
+              lon: coord[0].toString()
+            };
           }
+
+          const popupHtml = `
+            <div style="font-family:sans-serif; text-align:center; min-width:120px; padding:4px;">
+               <strong style="color:var(--primary); font-size:14px; display:block; margin-bottom:2px;">${stationToMark.name}</strong>
+               <span style="font-size:11px; color:#666;">${stationToMark.brand}</span><br>
+               <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${stationToMark.lon}, lat: ${stationToMark.lat}}}))"
+                       style="margin-top:10px; padding:6px 12px; background:#006C53; color:white; border:none; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; width:100%;">
+                  Agregar Parada
+               </button>
+            </div>`;
+
+          this.mapService.setSmartStopMarker(
+            parseFloat(stationToMark.lon), 
+            parseFloat(stationToMark.lat), 
+            'local_gas_station', 
+            popupHtml
+          );
+
+          this.cachedSmartStops.push({
+            name: stationToMark.name,
+            brand: stationToMark.brand,
+            lat: parseFloat(stationToMark.lat),
+            lng: parseFloat(stationToMark.lon),
+            alerted: false
+          });
         }
       }
     } finally {
@@ -753,11 +787,21 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   private async findGasStationsNear(lat: number, lng: number, brand?: string): Promise<any[]> {
     try {
-      const query = brand ? brand : 'fuel';
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=3&lat=${lat}&lon=${lng}&zoom=13`;
-      const resp = await fetch(url);
+      // Usar una búsqueda más amplia si hay marca, o genérica si no
+      const query = brand ? `${brand} gas station` : 'gas station';
+      
+      // Nominatim con viewbox pequeño alrededor del punto para simular "cerca"
+      const delta = 0.05; // ~5km
+      const viewbox = `${lng - delta},${lat + delta},${lng + delta},${lat - delta}`;
+      
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&viewbox=${viewbox}&bounded=1`;
+      
+      const resp = await fetch(url, {
+        headers: { 'Accept-Language': 'es' }
+      });
       return await resp.json();
     } catch (e) {
+      console.error('Error buscando estaciones:', e);
       return [];
     }
   }

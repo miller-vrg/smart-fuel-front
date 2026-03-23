@@ -57,21 +57,22 @@ export class VehiclesComponent implements OnInit {
 
     if (this.inputUnit === 'gallons') {
       // From Liters to Gallons
-      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons / this.GAL_TO_L);
-      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons / this.GAL_TO_L);
-      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon * this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons / this.GAL_TO_L, 4);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons / this.GAL_TO_L, 4);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon * this.GAL_TO_L, 4);
     } else {
       // From Gallons to Liters
-      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L, 4);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L, 4);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L, 4);
     }
 
     this.previousUnit = this.inputUnit;
   }
 
-  private round(val: number): number {
-    return Math.round(val * 100) / 100;
+  private round(val: number, decimals: number = 2): number {
+    const factor = Math.pow(10, decimals);
+    return Math.round(val * factor) / factor;
   }
 
   openAddModal() {
@@ -84,9 +85,9 @@ export class VehiclesComponent implements OnInit {
 
     // resetForm returns gallons, so we convert initial defaults to liters if needed
     if (this.inputUnit === 'liters') {
-      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L, 4);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L, 4);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L, 4);
     }
 
     this.toggleModal(true);
@@ -105,9 +106,9 @@ export class VehiclesComponent implements OnInit {
 
     // Backend stores as Gallons. Convert to user's preferred unit for editing.
     if (this.inputUnit === 'liters') {
-      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L);
-      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L);
-      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L);
+      if (this.form.fuelCapacityGallons !== undefined) this.form.fuelCapacityGallons = this.round(this.form.fuelCapacityGallons * this.GAL_TO_L, 4);
+      if (this.form.currentFuelGallons !== undefined) this.form.currentFuelGallons = this.round(this.form.currentFuelGallons * this.GAL_TO_L, 4);
+      if (this.form.avgKmPerGallon !== undefined) this.form.avgKmPerGallon = this.round(this.form.avgKmPerGallon / this.GAL_TO_L, 4);
     }
 
     this.toggleModal(true);
@@ -138,10 +139,10 @@ export class VehiclesComponent implements OnInit {
       if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon *= this.GAL_TO_L; // FIXED: Changed /= to *= for Liters -> Gallons (Km/L to Km/Gal)
     }
 
-    // Strict rounding to 2 decimals before saving
-    if (dataToSave.fuelCapacityGallons !== undefined) dataToSave.fuelCapacityGallons = this.round(dataToSave.fuelCapacityGallons);
-    if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons = this.round(dataToSave.currentFuelGallons);
-    if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon);
+    // Strict rounding to 4 decimals before saving (Backend updated to scale: 4)
+    if (dataToSave.fuelCapacityGallons !== undefined) dataToSave.fuelCapacityGallons = this.round(dataToSave.fuelCapacityGallons, 4);
+    if (dataToSave.currentFuelGallons !== undefined) dataToSave.currentFuelGallons = this.round(dataToSave.currentFuelGallons, 4);
+    if (dataToSave.avgKmPerGallon !== undefined) dataToSave.avgKmPerGallon = this.round(dataToSave.avgKmPerGallon, 4);
 
     // Remove ID and other read-only or extra fields from payload for PATCH/POST
     const {

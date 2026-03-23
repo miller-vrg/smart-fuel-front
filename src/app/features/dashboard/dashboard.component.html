@@ -47,19 +47,19 @@
           <div class="fuel-detail__content">
             <div class="detail-row">
               <span class="detail-row__label">Tanque Total</span>
-              <span class="detail-row__val">{{ data.vehicle?.fuelCapacityGallons | number:'1.1-1' }} Gal</span>
+              <span class="detail-row__val">{{ getDisplayCapacity(data.vehicle) }} {{ getUnitLabel(data.vehicle) }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-row__label">Combustible Actual</span>
-              <span class="detail-row__val">{{ data.vehicle?.currentFuelGallons | number:'1.1-1' }} Gal</span>
+              <span class="detail-row__val">{{ getDisplayCurrentFuel(data.vehicle) }} {{ getUnitLabel(data.vehicle) }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-row__label">Rendimiento Promedio</span>
-              <span class="detail-row__val">{{ data.vehicle?.avgKmPerGallon | number:'1.1-1' }} Km/Gal</span>
+              <span class="detail-row__val">{{ getDisplayPerformance(data.vehicle) }} {{ getPerformanceUnitLabel(data.vehicle) }}</span>
             </div>
             <div class="detail-row detail-row--highlight">
               <span class="detail-row__label">Reserva de Seguridad</span>
-              <span class="detail-row__val">{{ (data.vehicle?.safetyBuffer || 0.15) * 100 }}%</span>
+              <span class="detail-row__val">{{ (data.vehicle?.safetyBuffer || 0.15) * 100 | number:'1.0-0' }}%</span>
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
         Start Serene Journey
       </button>
-      
+
       <button class="cta-button" (click)="toggleRefillModal(true)">
         <div class="cta-button__icon">
           <span class="material-symbols-outlined">ev_station</span>
@@ -139,8 +139,8 @@
   </div>
 
   <!-- Fuel Refill Modal -->
-  <app-fuel-refill 
-    *ngIf="showRefillModal" 
+  <app-fuel-refill
+    *ngIf="showRefillModal"
     (closeEvent)="toggleRefillModal(false)">
   </app-fuel-refill>
 }

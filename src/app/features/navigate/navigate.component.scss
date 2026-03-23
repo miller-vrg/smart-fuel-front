@@ -676,23 +676,6 @@
     }
   }
 
-  &--fuel-alert {
-    background: var(--error-container);
-    color: var(--error);
-    border: 1px solid var(--error);
-    animation: pulse-red 2s infinite;
-
-    .material-symbols-outlined {
-      font-size: 20px;
-      font-variation-settings: 'FILL' 1;
-    }
-
-    .hud-circle__unit {
-      color: var(--error);
-      font-size: 0.5rem;
-    }
-  }
-
   &--cancel {
     background: var(--error-container);
     color: var(--on-error-container);

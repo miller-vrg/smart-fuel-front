@@ -293,6 +293,7 @@ export class FuelRefillComponent {
     const val = this.unit() === 'liters' 
       ? v.currentFuelGallons * this.GAL_TO_L 
       : v.currentFuelGallons;
+    // Use 2 decimal places for display, but ensure the underlying value is precise
     return Math.round(val * 100) / 100;
   }
 
@@ -323,8 +324,9 @@ export class FuelRefillComponent {
 
     const dto = {
       vehicleId: v.id,
-      gallonsAdded: Math.round(gallonsAdded * 100) / 100,
-      pricePerGallon: Math.round(pricePerGallon * 100) / 100,
+      // Use 4 decimals for high precision storage (matching the new backend scale)
+      gallonsAdded: Math.round(gallonsAdded * 10000) / 10000,
+      pricePerGallon: Math.round(pricePerGallon * 10000) / 10000,
       odometer: this.odometerSig(),
       stationName: 'Registro Manual',
       notes: `Registro de tanqueo via App (${this.unit()})`
