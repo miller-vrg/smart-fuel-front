@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, OnInit, computed } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { switchMap, catchError, first } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 
 import { VehicleService } from '@core/services/vehicle.service';
 import { FuelService } from '@core/services/fuel.service';
@@ -45,8 +45,12 @@ export class DashboardComponent implements OnInit {
     this.allVehicles$ = this.vehicleService.loadInitialVehicle();
     this.vehicle$ = this.vehicleService.activeVehicle$;
     
-    this.range$ = this.vehicle$.pipe(
-      switchMap(v => {
+    // Refresh range when vehicle changes OR when data is refreshed globally
+    this.range$ = combineLatest([
+      this.vehicle$, 
+      this.vehicleService.dataRefreshed$
+    ]).pipe(
+      switchMap(([v, _]) => {
         if (!v || !v.id) return of({ safeRangeKm: 0, fuelLevelPercent: 0, status: 'UNKNOWN' });
         return this.fuelService.getRange(v.id);
       }),

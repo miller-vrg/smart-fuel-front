@@ -13,6 +13,13 @@ export class VehicleService {
   private activeVehicleSubject = new BehaviorSubject<Vehicle | null>(null);
   activeVehicle$ = this.activeVehicleSubject.asObservable();
 
+  private dataRefreshedSubject = new BehaviorSubject<void>(undefined);
+  dataRefreshed$ = this.dataRefreshedSubject.asObservable();
+
+  refreshData() {
+    this.dataRefreshedSubject.next();
+  }
+
   loadInitialVehicle(): Observable<Vehicle[]> {
     return this.api.get<Vehicle[]>('/vehicles').pipe(
       tap(vehicles => {
@@ -31,6 +38,7 @@ export class VehicleService {
   setActiveVehicle(vehicle: Vehicle) {
     localStorage.setItem('selectedVehicleId', vehicle.id);
     this.activeVehicleSubject.next(vehicle);
+    this.refreshData(); // Global refresh when vehicle changes
   }
 
   getActiveVehicleId(): string | null {
@@ -55,6 +63,10 @@ export class VehicleService {
 
   getVehicleById(id: string): Observable<Vehicle> {
     return this.api.get<Vehicle>(`/vehicles/${id}`);
+  }
+
+  addFuelLog(dto: any): Observable<any> {
+    return this.api.post('/fuel/log', dto);
   }
 
   refill(id: string, addedGallons: number, currentFuelGallons: number): Observable<Vehicle> {

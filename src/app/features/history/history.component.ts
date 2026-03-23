@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+import { combineLatest, Observable, EMPTY } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { Observable, EMPTY } from 'rxjs';
 
 import { FuelService } from '@core/services/fuel.service';
 import { VehicleService } from '@core/services/vehicle.service';
@@ -34,11 +34,18 @@ export class HistoryComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.summary$ = this.vehicleService.activeVehicle$.pipe(
-      switchMap(v => v ? this.fuelService.getConsumptionSummary(v.id) : EMPTY)
+    this.summary$ = combineLatest([
+      this.vehicleService.activeVehicle$,
+      this.vehicleService.dataRefreshed$
+    ]).pipe(
+      switchMap(([v, _]: [any, any]) => v ? this.fuelService.getConsumptionSummary(v.id) : EMPTY)
     );
-    this.logs$ = this.vehicleService.activeVehicle$.pipe(
-      switchMap(v => v ? this.fuelService.getHistory(v.id) : EMPTY)
+
+    this.logs$ = combineLatest([
+      this.vehicleService.activeVehicle$,
+      this.vehicleService.dataRefreshed$
+    ]).pipe(
+      switchMap(([v, _]: [any, any]) => v ? this.fuelService.getHistory(v.id) : EMPTY)
     );
     
     // Ensure vehicles are loaded if they haven't been

@@ -19,7 +19,7 @@ import { take } from 'rxjs';
           </button>
         </header>
 
-        <form (ngSubmit)="save()">
+        <form (ngSubmit)="save()" *ngIf="!showSuccess()">
           <div class="form-group">
             <label>Vehículo</label>
             <select [(ngModel)]="selectedVehicleId" name="vehicleId" required>
@@ -46,6 +46,10 @@ import { take } from 'rxjs';
               <label>Dinero Total</label>
               <input type="number" [ngModel]="totalMoneySig()" (ngModelChange)="totalMoneySig.set($event)" name="money" placeholder="0">
             </div>
+            <div class="form-group">
+              <label>Odómetro Actual (Opcional)</label>
+              <input type="number" [ngModel]="odometerSig()" (ngModelChange)="odometerSig.set($event)" name="odometer" placeholder="Km">
+            </div>
           </div>
 
           <div class="form-group amount-highlight">
@@ -63,12 +67,18 @@ import { take } from 'rxjs';
           </div>
 
           <footer class="modal-footer">
-            <button type="button" class="btn-secondary" (click)="close()">Cancelar</button>
-            <button type="submit" class="btn-primary" [disabled]="!calculatedAmount() || !selectedVehicleId">
-              Guardar Registro
+            <button type="button" class="btn-secondary" (click)="close()" [disabled]="isSaving()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="!calculatedAmount() || !selectedVehicleId || isSaving()">
+              {{ isSaving() ? 'Guardando...' : 'Guardar Registro' }}
             </button>
           </footer>
         </form>
+
+        <div class="success-message" *ngIf="showSuccess()">
+          <span class="material-symbols-outlined check-icon">check_circle</span>
+          <h3>¡Registro Guardado!</h3>
+          <p>El historial de combustible ha sido actualizado.</p>
+        </div>
       </div>
     </div>
   `,
@@ -199,6 +209,24 @@ import { take } from 'rxjs';
     .btn-primary { background: var(--primary); color: var(--on-primary); box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.25); }
     .btn-secondary { background: var(--surface-container-high); color: var(--on-surface); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .success-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
+      text-align: center;
+      animation: zoom-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .check-icon { font-size: 64px; color: var(--primary); margin-bottom: 16px; font-variation-settings: 'FILL' 1; }
+    .success-message h3 { margin: 0; font-size: 1.5rem; color: var(--on-surface); }
+    .success-message p { margin: 8px 0 0; color: var(--on-surface-variant); }
+
+    @keyframes zoom-in {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -211,7 +239,12 @@ export class FuelRefillComponent {
   // Reactive signals for the form
   pricePerUnitSig = signal<number | null>(null);
   totalMoneySig = signal<number | null>(null);
+  odometerSig = signal<number | null>(null);
   
+  // UI States
+  isSaving = signal(false);
+  showSuccess = signal(false);
+
   // Units state
   unit = signal<'liters' | 'gallons'>('gallons');
   
@@ -261,25 +294,48 @@ export class FuelRefillComponent {
   }
 
   close() {
+    if (this.isSaving()) return;
     this.closeEvent.emit();
   }
 
   save() {
     const amountInSelectedUnit = this.calculatedAmount();
-    if (!this.selectedVehicleId || !amountInSelectedUnit) return;
+    if (!this.selectedVehicleId || !amountInSelectedUnit || this.isSaving()) return;
     
+    this.isSaving.set(true);
     const v = this.selectedVehicle()!;
     
     // Convert to gallons for backend
-    let addedGallons = this.unit() === 'liters' 
+    const gallonsAdded = this.unit() === 'liters' 
       ? amountInSelectedUnit / this.GAL_TO_L 
       : amountInSelectedUnit;
 
-    addedGallons = Math.round(addedGallons * 100) / 100;
+    const pricePerGallon = this.unit() === 'liters'
+      ? (this.pricePerUnitSig() || 0) * this.GAL_TO_L
+      : (this.pricePerUnitSig() || 0);
 
-    this.vehicleService.refill(v.id, addedGallons, v.currentFuelGallons || 0).subscribe(() => {
-        this.close();
-        window.location.reload(); 
+    const dto = {
+      vehicleId: v.id,
+      gallonsAdded: Math.round(gallonsAdded * 100) / 100,
+      pricePerGallon: Math.round(pricePerGallon * 100) / 100,
+      odometer: this.odometerSig(),
+      stationName: 'Registro Manual',
+      notes: `Registro de tanqueo via App (${this.unit()})`
+    };
+
+    this.vehicleService.addFuelLog(dto).subscribe({
+      next: () => {
+        this.showSuccess.set(true);
+        this.vehicleService.refreshData(); // Global refresh
+        // Close after 1.5s
+        setTimeout(() => {
+          this.closeEvent.emit();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error saving fuel log:', err);
+        this.isSaving.set(false);
+      }
     });
   }
 }
