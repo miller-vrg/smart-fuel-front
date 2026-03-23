@@ -25,6 +25,8 @@ export class VehiclesComponent implements OnInit {
   
   // Form fields
   form: Partial<Vehicle> = this.resetForm();
+  inputUnit: 'liters' | 'gallons' = 'liters';
+  readonly GAL_TO_L = 3.78541;
 
   ngOnInit() {
     this.loadVehicles();
@@ -48,6 +50,12 @@ export class VehiclesComponent implements OnInit {
   openEditModal(vehicle: Vehicle) {
     this.editingVehicle = vehicle;
     this.form = { ...vehicle };
+    // Default to liters for editing if the values look like they came from liters (heuristic) or just always default to liters
+    this.inputUnit = 'liters'; 
+    if (this.form.fuelCapacityGallons) this.form.fuelCapacityGallons *= this.GAL_TO_L;
+    if (this.form.currentFuelGallons) this.form.currentFuelGallons *= this.GAL_TO_L;
+    if (this.form.avgKmPerGallon) this.form.avgKmPerGallon /= this.GAL_TO_L;
+    
     this.showModal = true;
   }
 
@@ -56,13 +64,30 @@ export class VehiclesComponent implements OnInit {
   }
 
   saveVehicle() {
+    // Clone form to avoid UI flicker during conversion
+    const dataToSave = { ...this.form };
+    
+    if (this.inputUnit === 'liters') {
+      if (dataToSave.fuelCapacityGallons) {
+        dataToSave.fuelCapacityGallons = dataToSave.fuelCapacityGallons / this.GAL_TO_L;
+      }
+      if (dataToSave.currentFuelGallons) {
+        dataToSave.currentFuelGallons = dataToSave.currentFuelGallons / this.GAL_TO_L;
+      }
+      if (dataToSave.avgKmPerGallon) {
+        // RENDIMIENTO: if they enter Km/Liter, we must convert to Km/Gallon
+        // 1 gal = 3.785L -> Km/Gal = (Km/L) * 3.785
+        dataToSave.avgKmPerGallon = dataToSave.avgKmPerGallon * this.GAL_TO_L;
+      }
+    }
+
     if (this.editingVehicle && this.editingVehicle.id) {
-      this.vehicleService.updateVehicle(this.editingVehicle.id, this.form).subscribe(() => {
+      this.vehicleService.updateVehicle(this.editingVehicle.id, dataToSave).subscribe(() => {
         this.loadVehicles();
         this.closeModal();
       });
     } else {
-      this.vehicleService.createVehicle(this.form).subscribe(() => {
+      this.vehicleService.createVehicle(dataToSave).subscribe(() => {
         this.loadVehicles();
         this.closeModal();
       });

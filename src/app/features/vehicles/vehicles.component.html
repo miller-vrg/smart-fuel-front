@@ -68,7 +68,12 @@
         <h2 class="modal-title">{{ editingVehicle ? 'Editar' : 'Nuevo' }} Vehículo</h2>
         
         <form class="vehicle-form" (submit)="saveVehicle()">
-          <div class="form-row">
+          <div class="unit-selector">
+            <button type="button" [class.active]="inputUnit === 'liters'" (click)="inputUnit = 'liters'">Litros (L)</button>
+            <button type="button" [class.active]="inputUnit === 'gallons'" (click)="inputUnit = 'gallons'">Galones (Gal)</button>
+          </div>
+
+          <div class="form-grid">
             <div class="form-group">
               <label>Marca</label>
               <input type="text" [(ngModel)]="form.brand" name="brand" required placeholder="Ej: Mazda">
@@ -77,9 +82,6 @@
               <label>Modelo</label>
               <input type="text" [(ngModel)]="form.model" name="model" required placeholder="Ej: CX-5">
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
               <label>Placa</label>
               <input type="text" [(ngModel)]="form.licensePlate" name="licensePlate" required placeholder="ABC-123">
@@ -90,14 +92,20 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Capacidad Tanque (Galones)</label>
-            <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Capacidad Tanque ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
+              <input type="number" [(ngModel)]="form.fuelCapacityGallons" name="fuelCap" required>
+            </div>
+            <div class="form-group">
+              <label>Rendimiento (Km/{{ inputUnit === 'liters' ? 'Litro' : 'Gallón' }})</label>
+              <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
+            </div>
           </div>
 
           <div class="form-group">
-            <label>Rendimiento Promedio (Km/Galón)</label>
-            <input type="number" [(ngModel)]="form.avgKmPerGallon" name="avgKm" required>
+            <label>Combustible Actual ({{ inputUnit === 'liters' ? 'Litros' : 'Gallones' }})</label>
+            <input type="number" [(ngModel)]="form.currentFuelGallons" name="currFuel" required>
           </div>
 
           <div class="form-group">
@@ -109,7 +117,7 @@
             </div>
           </div>
 
-          <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin: 16px 0;">
+          <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin: 8px 0;">
             <input type="checkbox" id="isMain" [(ngModel)]="form.isMain" name="isMain" style="width: 20px; height: 20px; cursor: pointer;">
             <label for="isMain" style="margin: 0; cursor: pointer; font-weight: 500;">Establecer como Vehículo Principal</label>
           </div>

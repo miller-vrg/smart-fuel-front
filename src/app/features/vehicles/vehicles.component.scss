@@ -203,7 +203,31 @@
   gap: 16px;
 }
 
-.form-row {
+.unit-selector {
+  display: flex;
+  background: var(--surface-container-high);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.unit-selector button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.unit-selector button.active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
