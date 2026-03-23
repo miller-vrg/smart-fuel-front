@@ -8,11 +8,10 @@ import { AppNotification } from '@core/interfaces/notification.interface';
 import { NotificationCardComponent } from '@shared/components/notification-card/notification-card.component';
 
 @Component({
-  selector: 'app-notifications',
-  standalone: true,
-  imports: [CommonModule, NotificationCardComponent],
-  templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.scss']
+    selector: 'app-notifications',
+    imports: [CommonModule, NotificationCardComponent],
+    templateUrl: './notifications.component.html',
+    styleUrls: ['./notifications.component.scss']
 })
 export class NotificationsComponent {
   private location = inject(Location);

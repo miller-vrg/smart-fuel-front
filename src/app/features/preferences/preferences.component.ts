@@ -11,12 +11,11 @@ import { Preference } from '@core/interfaces/preference.interface';
 import { ToggleSetting, FuelPriority } from './preferences.interfaces';
 
 @Component({
-  selector: 'app-preferences',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './preferences.component.html',
-  styleUrl: './preferences.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-preferences',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './preferences.component.html',
+    styleUrl: './preferences.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PreferencesComponent implements OnInit {
   prefService = inject(PreferencesService);

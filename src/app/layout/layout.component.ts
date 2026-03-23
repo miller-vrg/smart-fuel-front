@@ -14,12 +14,11 @@ interface NavItem {
 }
 
 @Component({
-  selector: 'app-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationCardComponent, MapComponent],
-  templateUrl: './layout.component.html',
-  styleUrl: './layout.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-layout',
+    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationCardComponent, MapComponent],
+    templateUrl: './layout.component.html',
+    styleUrl: './layout.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LayoutComponent {
   private router = inject(Router);

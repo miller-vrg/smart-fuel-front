@@ -20,12 +20,11 @@ import { environment } from '@env/environment';
 import { UserPosition } from './navigate.interfaces';
 
 @Component({
-  selector: 'app-navigate',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './navigate.component.html',
-  styleUrl: './navigate.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-navigate',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './navigate.component.html',
+    styleUrl: './navigate.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavigateComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);

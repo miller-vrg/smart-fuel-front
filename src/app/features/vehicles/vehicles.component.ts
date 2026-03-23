@@ -7,12 +7,11 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { Vehicle } from '@core/interfaces/vehicle.interface';
 
 @Component({
-  selector: 'app-vehicles',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './vehicles.component.html',
-  styleUrl: './vehicles.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-vehicles',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './vehicles.component.html',
+    styleUrl: './vehicles.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VehiclesComponent implements OnInit {
   private vehicleService = inject(VehicleService);

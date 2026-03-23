@@ -7,10 +7,9 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, GoogleSigninButtonModule],
-  template: `
+    selector: 'app-login',
+    imports: [CommonModule, GoogleSigninButtonModule],
+    template: `
     <div class="login-container">
       <div class="login-card">
         <div class="logo">
@@ -26,7 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .login-container {
       display: flex;
       justify-content: center;

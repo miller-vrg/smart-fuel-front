@@ -3,11 +3,10 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { AppNotification } from '@core/interfaces/notification.interface';
 
 @Component({
-  selector: 'app-notification-card',
-  standalone: true,
-  imports: [CommonModule, DatePipe],
-  templateUrl: './notification-card.component.html',
-  styleUrls: ['./notification-card.component.scss']
+    selector: 'app-notification-card',
+    imports: [CommonModule, DatePipe],
+    templateUrl: './notification-card.component.html',
+    styleUrls: ['./notification-card.component.scss']
 })
 export class NotificationCardComponent {
   @Input() notification!: AppNotification;

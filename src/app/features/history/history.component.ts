@@ -9,12 +9,11 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { FuelLog } from '@core/interfaces/fuel.interface';
 
 @Component({
-  selector: 'app-history',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './history.component.html',
-  styleUrl: './history.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-history',
+    imports: [CommonModule],
+    templateUrl: './history.component.html',
+    styleUrl: './history.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistoryComponent implements OnInit {
   fuelService = inject(FuelService);

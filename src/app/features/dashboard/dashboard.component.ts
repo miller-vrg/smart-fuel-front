@@ -11,12 +11,11 @@ import { AuthService } from '@core/services/auth.service';
 import { computed } from '@angular/core';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-dashboard',
+    imports: [CommonModule],
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
   vehicleService = inject(VehicleService);
