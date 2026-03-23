@@ -1,7 +1,7 @@
 :host {
   display: block;
-  position: absolute;
-  inset: 0;
+  position: fixed !important;
+  inset: 0 !important;
   z-index: 10;
   pointer-events: none !important;
 }

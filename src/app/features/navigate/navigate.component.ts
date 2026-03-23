@@ -108,10 +108,30 @@ export class NavigateComponent implements OnInit, OnDestroy {
   maneuverDistance = '';
   maneuverStreet = '';
 
-  // Custom Trip Alert Modal
   showTripAlertModal = false;
   tripAlertData: { title: string; message: string; detail: string } | null = null;
   private hasShownAutonomyAlert = false;
+  private hasShownLowFuelAlert = false;
+
+  // Cache stops so they don't flicker on every GPS update
+  cachedSmartStops: { name: string; brand: string; lat: number; lng: number; alerted: boolean }[] = [];
+
+  // Fuel HUD computations
+  get fuelLevelPercent(): number {
+    if (!this.activeVehicle || !this.activeVehicle.fuelCapacityGallons) return 100;
+    return (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons) * 100;
+  }
+
+  get fuelColor(): string {
+    const p = this.fuelLevelPercent;
+    if (p > 50) return '#4caf50'; // Green
+    if (p > 25) return '#ff9800'; // Amber
+    return '#f44336';             // Red
+  }
+
+  get fuelDashOffset(): number {
+    return 125.6 * (1 - this.fuelLevelPercent / 100);
+  }
 
   ngOnInit(): void {
     this.startWatchingPosition();
@@ -236,13 +256,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     this.currentSpeed = Math.round((currentPos.speed || 0) * 3.6);
 
-    // 1. Calculate delta distance & Fuel consumption
+    // 1. Calculate delta distance & Fuel consumption ONLY if moving >= 1 km/h
     if (this.lastPosition) {
       const deltaKm = this.calculateDistance(this.lastPosition, currentPos);
-      if (deltaKm > 0.005) { // Threshold for significant move
+      const speedKmh = this.currentSpeed;
+      const isMoving = speedKmh >= 1; // 1 km/h threshold
+
+      if (isMoving && deltaKm > 0.002) { // Threshold for significant move ~2m
         this.totalKmTraveled += deltaKm;
         const gallonsConsumed = deltaKm / (this.activeVehicle.avgKmPerGallon || 30);
-        this.activeVehicle.currentFuelGallons = Math.max(0, this.activeVehicle.currentFuelGallons - gallonsConsumed);
+        this.activeVehicle.currentFuelGallons = Math.max(0, this.activeVehicle.currentFuelGallons! - gallonsConsumed);
         
         if (this.totalKmTraveled - this.lastKmUpdate >= 1) {
            this.lastKmUpdate = this.totalKmTraveled;
@@ -250,6 +273,24 @@ export class NavigateComponent implements OnInit, OnDestroy {
              currentFuelGallons: this.activeVehicle.currentFuelGallons 
            }).subscribe();
         }
+      }
+
+      // Approach Alerts for cached smart stops
+      this.cachedSmartStops.forEach(stop => {
+        if (!stop.alerted) {
+          const distToStop = this.calculateDistance(currentPos, { lat: stop.lat, lng: stop.lng }) * 1000;
+          if (distToStop <= 150) {
+            stop.alerted = true;
+            // Native browser alert or toast (using native alert for simplicity as requested)
+            setTimeout(() => alert(`📍 Estás llegando a: ${stop.name || stop.brand}`), 0);
+          }
+        }
+      });
+      
+      // Low fuel alert (< 15%)
+      if (this.fuelLevelPercent < 15 && !this.hasShownLowFuelAlert) {
+         this.hasShownLowFuelAlert = true;
+         setTimeout(() => alert(`⛽ Nivel de combustible bajo (${this.fuelLevelPercent.toFixed(0)}%). Busca una estación próxima.`), 0);
       }
     }
 
@@ -459,6 +500,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
      this.eta = mins;
      
      this.mapService.clearRouteAndMarkers();
+     this.cachedSmartStops = []; // Reset markers caching for the new route
      this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
      
      this.detailedRouteCoords = route.geometry.coordinates;
@@ -617,12 +659,18 @@ export class NavigateComponent implements OnInit, OnDestroy {
       this.isAutonomyCritical = false; return;
     }
 
-    const autonomy = (this.activeVehicle.currentFuelGallons * this.activeVehicle.avgKmPerGallon) || 300;
+    const autonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const routeKm = parseFloat(this.routeDistance);
     const safeAutonomy = autonomy - kmBefore;
     
     this.isAutonomyCritical = routeKm > safeAutonomy;
+
+    // Use cached stops if they exist and we're actively navigating
+    if (this.cachedSmartStops.length > 0) {
+      return; 
+    }
+    
     this.mapService.clearStopMarkers();
 
     if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
@@ -657,9 +705,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
                        style="margin-top:8px; padding:4px 8px; background:var(--primary); color:white; border:none; border-radius:4px; font-size:10px;">Agregar Parada</button>
             </div>`;
           this.mapService.setSmartStopMarker(parseFloat(s.lon), parseFloat(s.lat), 'local_gas_station', popupHtml);
+          this.cachedSmartStops.push({ name: s.name, brand: s.brand || brandName, lat: parseFloat(s.lat), lng: parseFloat(s.lon), alerted: false });
         } else {
           // Fallback if no real stations found
           this.mapService.setSmartStopMarker(stopPoint[0], stopPoint[1], 'local_gas_station', `Estación ${brandName} sugerida`);
+          this.cachedSmartStops.push({ name: `Estación ${brandName} sugerida`, brand: brandName, lat: stopPoint[1], lng: stopPoint[0], alerted: false });
         }
       }
     }
@@ -724,6 +774,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.destination = null; this.searchQuery = '';
     this.destinationName = 'Destino seleccionado';
     this.hasShownAutonomyAlert = false;
+    this.hasShownLowFuelAlert = false;
+    this.cachedSmartStops = [];
     this.mapService.clearRouteAndMarkers();
     this.cdr.markForCheck();
   }

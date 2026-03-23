@@ -198,12 +198,16 @@
             <span class="material-symbols-outlined">route</span>
           </div>
 
-          @if (isAutonomyCritical) {
-            <div class="hud-circle hud-circle--fuel-alert">
-              <span class="material-symbols-outlined">local_gas_station</span>
-              <span class="hud-circle__unit">BAJO</span>
-            </div>
-          }
+          <div class="hud-circle hud-circle--fuel">
+            <svg viewBox="0 0 48 48" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
+              <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(150,150,150,0.2)" stroke-width="4"/>
+              <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor" 
+                      [attr.stroke-dasharray]="125.6" [attr.stroke-dashoffset]="fuelDashOffset" 
+                      stroke-width="4" style="transition:stroke-dashoffset 0.5s ease-in-out, stroke 0.5s;"/>
+            </svg>
+            <span class="hud-circle__val" [style.color]="fuelColor" style="z-index:1; font-size:1rem;">{{ fuelLevelPercent | number:'1.0-0' }}</span>
+            <span class="hud-circle__unit" style="z-index:1;">%</span>
+          </div>
 
           <div class="hud-circle hud-circle--eta">
             <span class="hud-circle__val">{{ eta }}</span>
