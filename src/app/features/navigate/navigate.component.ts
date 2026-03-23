@@ -25,7 +25,9 @@ import { UserPosition } from './navigate.interfaces';
     imports: [CommonModule, FormsModule],
     templateUrl: './navigate.component.html',
     styleUrl: './navigate.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+    host:{
+      class: 'navigate-component'
+    }
 })
 export class NavigateComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
