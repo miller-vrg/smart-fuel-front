@@ -254,6 +254,20 @@
     <section class="arrival-bar" [class.arrival-bar--condensed]="isArrivalBarCondensed">
       @if (!isArrivalBarCondensed) {
         <div class="arrival-bar__card" (click)="isArrivalBarCondensed = true">
+          <div class="arrival-bar__col arrival-bar__col--fuel-always">
+            <div class="hud-circle hud-circle--fuel hud-circle--fuel-mini" (click)="showFuelDetail = !showFuelDetail; showDetailsCurrentFuel(); $event.stopPropagation()">
+              <svg viewBox="0 0 48 48" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
+                <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(150,150,150,0.1)" stroke-width="6"/>
+                <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor"
+                        [attr.stroke-dasharray]="125.6" [attr.stroke-dashoffset]="fuelDashOffset"
+                        stroke-width="6" style="transition:stroke-dashoffset 0.5s ease-in-out, stroke 0.5s;"/>
+              </svg>
+              <span class="hud-circle__val" [style.color]="fuelColor">{{ fuelLevelPercent | number:'1.0-0' }}%</span>
+            </div>
+          </div>
+
+          <div class="arrival-bar__divider"></div>
+
           <div class="arrival-bar__col">
             <div style="display:flex; gap:8px; margin-bottom:8px;">
               <button class="arrival-bar__inline-btn" (click)="toggleRouteList(); $event.stopPropagation()">
@@ -262,6 +276,11 @@
               @if (isAutonomyCritical) {
                 <button class="arrival-bar__inline-btn arrival-bar__inline-btn--alert" (click)="toggleStopsList(); $event.stopPropagation()">
                   <span class="material-symbols-outlined">local_gas_station</span>
+                </button>
+              }
+              @if (isDetourActive) {
+                <button class="arrival-bar__inline-btn arrival-bar__inline-btn--detour" (click)="returnToOriginalDestination(); $event.stopPropagation()" title="Volver a ruta original">
+                  <span class="material-symbols-outlined">undo</span>
                 </button>
               }
             </div>

@@ -390,6 +390,25 @@ app-root {
         padding: 2px 8px;
         border-radius: 10px;
       }
+
+      .stop-popup-go-btn {
+        background: var(--primary);
+        color: var(--on-primary);
+        border: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s;
+
+        &:active { transform: scale(0.95); }
+
+        &--detour {
+          background: var(--tertiary);
+          color: var(--on-tertiary);
+        }
+      }
     }
   }
 }

@@ -140,6 +140,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
   private currentStopIndex = -1;
   private notifiedStops = new Set<string>();
 
+  // Detour logic
+  private originalDestination: { lat: number, lng: number } | null = null;
+  private originalDestinationName = '';
+  isDetourActive = false;
+
   onUserLocation(currentPos: UserPosition): void {
     if (!currentPos) return;
     this.userPosition = currentPos;
@@ -290,6 +295,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.startWatchingPosition();
     this.loadPreferences();
 
+    // Trigger proactive check as soon as possible if we already have position/vehicle
+    if (this.userPosition && this.activeVehicle) {
+      this.evaluateProactiveFuelCheck(this.userPosition);
+    }
+
     window.addEventListener('go-to-stop', (e: any) => {
       const { lat, lng, name } = e.detail;
       this.goToStop(lat, lng, name);
@@ -311,12 +321,33 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const stopPos = { lat, lng };
     this.mapService.setDestinationMarker(lng, lat);
 
-    // Si ya estamos navegando, calculamos la ruta al stop PERO manteniendo el destino original
-    // para cuando terminemos el tanqueo. Por ahora, simplemente navegamos al stop.
+    // If we are already navigating, save the original destination
+    if (this.isNavigating && !this.isDetourActive) {
+      this.originalDestination = { ...this.destination! };
+      this.originalDestinationName = this.destinationName;
+      this.isDetourActive = true;
+      this.triggerActiveNotification('Desvío a Parada', `Navegando a ${name}. Tu destino original (${this.originalDestinationName}) se guardó.`, 'smart_stop');
+    }
+
     this.destinationName = name;
     this.destination = stopPos;
     this.calculateRoute(this.userPosition!, stopPos).then(() => {
       this.executeTripLogic();
+    });
+  }
+
+  returnToOriginalDestination(): void {
+    if (!this.originalDestination || !this.userPosition) return;
+
+    this.destination = { ...this.originalDestination };
+    this.destinationName = this.originalDestinationName;
+    this.originalDestination = null;
+    this.originalDestinationName = '';
+    this.isDetourActive = false;
+
+    this.calculateRoute(this.userPosition, this.destination).then(() => {
+      this.executeTripLogic();
+      this.triggerActiveNotification('Retomando Ruta', `Navegando de vuelta a ${this.destinationName}.`, 'route_calc');
     });
   }
 
@@ -474,7 +505,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
     }
   }
 
-  private triggerActiveNotification(title: string, message: string, type: 'anomaly_alert' | 'smart_stop') {
+  private triggerActiveNotification(title: string, message: string, type: 'anomaly_alert' | 'smart_stop' | 'route_calc') {
     const notif: AppNotification = {
       id: Math.random().toString(36).substring(7),
       type,
@@ -914,6 +945,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
       }
       this.hasShownAutonomyAlert = false; // Reset on vehicle change
       if (this.isNavigating) this.executeTripLogic();
+      else if (this.userPosition) this.evaluateProactiveFuelCheck(this.userPosition);
     });
   }
 
@@ -1021,6 +1053,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private generatePopupHtml(station: any): string {
+    const isDetour = this.isNavigating;
+    const btnClass = isDetour ? 'stop-popup-go-btn stop-popup-go-btn--detour' : 'stop-popup-go-btn';
+    const btnText = isDetour ? 'Desviarse' : 'Ir Ahora';
+
     return `
       <div class="stop-popup-container">
         <div class="stop-popup-header">
@@ -1034,8 +1070,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
           <span>${station.display_name || 'Ubicación encontrada'}</span>
         </div>
         <div class="stop-popup-footer">
-          <button class="stop-popup-go-btn" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lon}, name: '${station.name}'}}))">
-            Ir Ahora
+          <button class="${btnClass}" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lon}, name: '${station.name}'}}))">
+            ${btnText}
           </button>
           <span class="stop-popup-tag">Sugerida</span>
         </div>
@@ -1131,6 +1167,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
   endTrip(): void {
     this.isNavigating = false;
     this.isArrivalBarCondensed = false;
+    this.isDetourActive = false;
+    this.originalDestination = null;
+    this.originalDestinationName = '';
+
     if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
     if (this.activeVehicle) this.vehicleService.saveActiveTrip(this.activeVehicle.id, null).subscribe();
     localStorage.removeItem('smartFuel_activeTrip');
