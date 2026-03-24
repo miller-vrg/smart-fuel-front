@@ -181,7 +181,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     const el = document.createElement('div');
     el.className = 'user-location-marker';
     el.innerHTML = `
-      <div class="user-marker-pulse"></div>
+      <div class="user-marker-label">Tú</div>
       <div class="user-marker-leaper">
         <div class="user-marker-dot"></div>
       </div>

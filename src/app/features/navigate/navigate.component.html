@@ -262,7 +262,7 @@
             <span class="material-symbols-outlined">route</span>
           </div>
 
-          <div class="hud-circle hud-circle--fuel" (click)="showFuelDetail = !showFuelDetail">
+          <div class="hud-circle hud-circle--fuel" (click)="showFuelDetail = !showFuelDetail" (click)="showDetailsCurrentFuel(); $event.stopPropagation()" >
             <svg viewBox="0 0 48 48" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
               <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(150,150,150,0.2)" stroke-width="4"/>
               <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor"
@@ -273,8 +273,8 @@
             <span class="hud-circle__unit" style="z-index:1;">%</span>
 
             <!-- Fuel Detail Bubble -->
-            @if (showFuelDetail && activeVehicle) {
-              <div class="fuel-detail-bubble" (click)="$event.stopPropagation()">
+            @if (showFuelDetail && activeVehicle && isShowDetailsCurrentFuel()) {
+              <div class="fuel-detail-bubble" (click)="showDetailsCurrentFuel();$event.stopPropagation()">
                 <div class="detail-row">
                   <span class="detail-row__label">Tanque</span>
                   <span class="detail-row__val">{{ activeVehicle.fuelCapacityGallons | number:'1.1-1' }} Gal</span>

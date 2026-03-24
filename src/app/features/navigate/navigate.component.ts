@@ -4,6 +4,7 @@ import {
   OnDestroy,
   ChangeDetectorRef,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -66,6 +67,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   searchQuery = '';
   searchResults: any[] = [];
   isSearching = false;
+  isShowDetailsCurrentFuel = signal(false);
   protected Math = Math;
 
   formatDuration(seconds: number): string {
@@ -164,6 +166,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.showStopsList = !this.showStopsList;
     if (this.showStopsList) this.showRouteList = false;
     this.cdr.markForCheck();
+  }
+
+  showDetailsCurrentFuel() {
+    this.isShowDetailsCurrentFuel.update((v) => !v);
   }
 
   centerOnStop(stop: any) {
