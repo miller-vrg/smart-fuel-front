@@ -53,7 +53,7 @@
   @if (!isNavigating) {
     <div class="search-bar">
       <div class="search-bar__input-box">
-        <!-- Left Side: Suggested Stops Button -->
+        <!-- Left Side: Favorites or Stops -->
         <div class="search-bar__left">
           @if (isAutonomyCritical && cachedSmartStops.length > 0) {
             <button class="search-bar__stops-btn" (click)="toggleStopsList()" title="Ver paradas sugeridas">
@@ -61,7 +61,9 @@
               <span class="stops-count">{{ cachedSmartStops.length }}</span>
             </button>
           } @else {
-            <span class="material-symbols-outlined search-bar__icon" (click)="clearSearch()">search</span>
+            <button class="search-bar__favs-btn" (click)="showFavorites = !showFavorites" [class.active]="showFavorites">
+              <span class="material-symbols-outlined">stars</span>
+            </button>
           }
         </div>
 
@@ -72,6 +74,11 @@
           (keyup.enter)="searchDestination()"/>
 
         <div class="search-bar__actions">
+          @if (destination && !isNavigating) {
+            <button class="search-bar__save-fav" (click)="saveAsFavorite()" title="Guardar como favorito">
+              <span class="material-symbols-outlined">bookmark_add</span>
+            </button>
+          }
           @if (searchQuery) {
             <button class="search-bar__clear" (click)="clearSearch()">
               <span class="material-symbols-outlined">close</span>
@@ -79,6 +86,24 @@
           }
         </div>
       </div>
+
+      <!-- Favorites List Dropdown -->
+      @if (showFavorites && favoriteLocations.length > 0) {
+        <div class="favorites-dropdown">
+          <div class="favorites-dropdown__header">Mis Favoritos</div>
+          @for (fav of favoriteLocations; track fav.id) {
+            <div class="favorite-item">
+              <div class="favorite-item__main" (click)="selectFavorite(fav)">
+                <span class="material-symbols-outlined">location_on</span>
+                <span class="favorite-item__name">{{ fav.name }}</span>
+              </div>
+              <button class="favorite-item__delete" (click)="removeFavorite(fav.id)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          }
+        </div>
+      }
 
       <!-- Search Results Dropdown -->
       @if (searchResults.length > 0) {
@@ -105,16 +130,22 @@
           <span class="material-symbols-outlined">local_gas_station</span>
           <h3 class="stops-list-sheet__title">Paradas Sugeridas</h3>
         </div>
-        <button class="stops-list-sheet__close" (click)="showStopsList = false">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+        <div class="stops-list-sheet__actions">
+          <button class="refill-btn-mini" (click)="toggleRefillModal(true)">
+            <span class="material-symbols-outlined">local_gas_station</span>
+            Registrar Tanqueo
+          </button>
+          <button class="stops-list-sheet__close" (click)="showStopsList = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
 
       <div class="stops-list-sheet__content">
         @for (stop of cachedSmartStops; track $index) {
           <div class="stop-list-item" (click)="centerOnStop(stop)">
-            <div class="stop-list-item__icon-box">
-              <span class="material-symbols-outlined">ev_station</span>
+            <div class="stop-list-item__icon-box" [class.stop-list-item__icon-box--done]="stop.refilled">
+              <span class="material-symbols-outlined">{{ stop.refilled ? 'check_circle' : 'ev_station' }}</span>
             </div>
             <div class="stop-list-item__info">
               <span class="stop-list-item__name">{{ stop.name }}</span>
@@ -125,6 +156,11 @@
         }
       </div>
     </div>
+  }
+
+  <!-- Refill Modal Integration -->
+  @if (showRefillModal) {
+    <app-fuel-refill (closeEvent)="toggleRefillModal(false)"/>
   }
 
   <!-- Suggestions Overlay -->

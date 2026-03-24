@@ -61,7 +61,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   isArrivalBarCondensed = false;
   isAutonomyCritical = false;
   private maneuverTimeout: any;
-  private arrivalBarTimeout: any;
+  private arrivalBarTimeout: any = null;
 
   // Search properties
   searchQuery = '';
@@ -92,6 +92,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   showActiveNotification = false;
   showStopsList = false;
   showFuelDetail = false;
+  showRefillModal = false; // Nuevo estado para el modal de tanqueo
   activeNotification: any | null = null;
   private notificationTimeout: any = null;
   newVehicleForm: Partial<Vehicle> = {
@@ -105,8 +106,12 @@ export class NavigateComponent implements OnInit, OnDestroy {
     safetyBuffer: 0.15
   };
 
+  // Favoritos
+  favoriteLocations: any[] = [];
+  showFavorites = false;
+
   // Store exact polyline array to plot markers ON the route
-  detailedRouteCoords: number[][] = [];
+  private detailedRouteCoords: number[][] = [];
 
   // Real-time tracking & Navigation Logic
   private lastPosition: UserPosition | null = null;
@@ -127,7 +132,75 @@ export class NavigateComponent implements OnInit, OnDestroy {
   private isEvaluatingRules = false;
 
   // Cache stops so they don't flicker on every GPS update
-  cachedSmartStops: { name: string; brand: string; lat: number; lng: number; alerted: boolean }[] = [];
+  // { name: string; brand: string; lat: number; lng: number; alerted: boolean }
+  cachedSmartStops:any[] = [];
+
+  // Seguimiento de paradas
+  private currentStopIndex = -1;
+  private notifiedStops = new Set<string>();
+
+  onUserLocation(currentPos: UserPosition): void {
+    if (!currentPos) return;
+    this.userPosition = currentPos;
+    this.locationReady = true;
+
+    if (this.isNavigating) {
+      this.checkStopProximity(currentPos);
+    }
+
+    // Update marker
+    this.mapService.setUserLocation(currentPos.lng, currentPos.lat, currentPos.heading);
+
+    // Camera follow in 3D
+    this.mapService.followUser3D(currentPos.lng, currentPos.lat, currentPos.heading);
+
+    this.monitorSpeed();
+    this.evaluateTripRules();
+    this.checkTrafficIncidents();
+    this.lastPosition = currentPos;
+  }
+
+  private checkStopProximity(pos: UserPosition): void {
+    if (this.cachedSmartStops.length === 0) return;
+
+    this.cachedSmartStops.forEach((stop, idx) => {
+      const distanceToStop = this.calculateDistance(pos, { lat: stop.lat, lng: stop.lng });
+      const stopKey = `${stop.lat}-${stop.lng}`;
+
+      // 1. Notificar llegada (radio de 200 metros)
+      if (distanceToStop < 0.2 && !this.notifiedStops.has(stopKey)) {
+        this.triggerActiveNotification(
+          'Llegando a Parada',
+          `Estás llegando a ${stop.name}. Puedes registrar tu tanqueo ahora.`,
+          'smart_stop'
+        );
+        this.notifiedStops.add(stopKey);
+        this.currentStopIndex = idx;
+        this.cdr.markForCheck();
+      }
+
+      // 2. Si pasa la parada sin registrar (se aleja > 500m después de haber estado cerca)
+      if (distanceToStop > 0.5 && this.notifiedStops.has(stopKey) && !stop.refilled) {
+        // Buscar la siguiente parada si el combustible sigue siendo crítico
+        this.evaluateTripRules();
+      }
+    });
+  }
+
+  toggleRefillModal(show: boolean): void {
+    this.showRefillModal = show;
+    if (show) this.vehicleService.registerModalOpen();
+    else {
+      this.vehicleService.registerModalClose();
+      // Si se cierra el modal, asumimos que pudo haber un cambio y recalculamos
+      if (this.destination) {
+        this.calculateRoute(this.userPosition!, this.destination).then(() => {
+          if (this.isNavigating) this.executeTripLogic();
+        });
+      }
+    }
+    this.cdr.markForCheck();
+  }
 
   // Fuel HUD computations
   get fuelLevelPercent(): number {
@@ -147,6 +220,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadFavorites();
     this.startWatchingPosition();
     this.loadPreferences();
 
@@ -162,9 +236,38 @@ export class NavigateComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleStopsList() {
+  loadFavorites(): void {
+    const saved = localStorage.getItem('smartFuel_favorites');
+    this.favoriteLocations = saved ? JSON.parse(saved) : [];
+  }
+
+  saveAsFavorite(): void {
+    if (!this.destination) return;
+    const newFav = {
+      name: this.destinationName,
+      lat: this.destination.lat,
+      lng: this.destination.lng,
+      id: Date.now()
+    };
+    this.favoriteLocations.push(newFav);
+    localStorage.setItem('smartFuel_favorites', JSON.stringify(this.favoriteLocations));
+    this.triggerActiveNotification('Favorito Guardado', `${this.destinationName} se agregó a tus favoritos.`, 'smart_stop');
+  }
+
+  removeFavorite(id: number): void {
+    this.favoriteLocations = this.favoriteLocations.filter(f => f.id !== id);
+    localStorage.setItem('smartFuel_favorites', JSON.stringify(this.favoriteLocations));
+  }
+
+  selectFavorite(fav: any): void {
+    this.showFavorites = false;
+    this.destinationName = fav.name;
+    this.searchQuery = fav.name;
+    this.onMapClick({ lng: fav.lng, lat: fav.lat }, true);
+  }
+
+  toggleStopsList(): void {
     this.showStopsList = !this.showStopsList;
-    if (this.showStopsList) this.showRouteList = false;
     this.cdr.markForCheck();
   }
 
@@ -172,12 +275,9 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.isShowDetailsCurrentFuel.update((v) => !v);
   }
 
-  centerOnStop(stop: any) {
+  centerOnStop(stop: any): void {
     this.mapService.flyTo(stop.lng, stop.lat, 16);
-    // On mobile, close list to see map
-    if (window.innerWidth < 600) {
-      this.showStopsList = false;
-    }
+    this.showStopsList = false;
     this.cdr.markForCheck();
   }
 
@@ -880,8 +980,29 @@ export class NavigateComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Incidencias y tráfico
+  private hasShownTrafficAlert = false;
+
+  private async checkTrafficIncidents(): Promise<void> {
+    if (!this.isNavigating || this.hasShownTrafficAlert) return;
+
+    // Simulación de detección de tráfico pesado o incidencia
+    // En una app real, aquí llamaríamos a una API de tráfico (ej: TomTom o Mapbox)
+    const randomTraffic = Math.random();
+    if (randomTraffic > 0.85) {
+      this.triggerActiveNotification(
+        'Tráfico Pesado',
+        'Se detecta congestión en tu ruta actual. El tiempo de llegada podría aumentar.',
+        'anomaly_alert'
+      );
+      this.hasShownTrafficAlert = true;
+
+      // Sugerir recálculo después de un tiempo
+      setTimeout(() => { this.hasShownTrafficAlert = false; }, 300000); // Reset cada 5 min
+    }
+  }
   private monitorSpeed(): void {
-    if (!this.userPreferences?.maxSpeedLimit || !this.isNavigating) return;
+    if(!this.userPreferences?.maxSpeedLimit || !this.isNavigating) return;
     if (this.currentSpeed >= this.userPreferences.maxSpeedLimit) {
       if (!this.showSpeedAlert) {
         this.showSpeedAlert = true;
@@ -890,46 +1011,46 @@ export class NavigateComponent implements OnInit, OnDestroy {
     } else this.showSpeedAlert = false;
   }
 
-  getSpeedStatusClass(): string {
-    if (!this.userPreferences?.maxSpeedLimit) return '';
-    const ratio = this.currentSpeed / this.userPreferences.maxSpeedLimit;
-    if (ratio >= 1) return 'speed-critical';
-    if (ratio >= 0.85) return 'speed-warning';
-    return 'speed-normal';
-  }
+getSpeedStatusClass(): string {
+  if (!this.userPreferences?.maxSpeedLimit) return '';
+  const ratio = this.currentSpeed / this.userPreferences.maxSpeedLimit;
+  if (ratio >= 1) return 'speed-critical';
+  if (ratio >= 0.85) return 'speed-warning';
+  return 'speed-normal';
+}
 
   private executeTripLogic(): void {
-    this.isNavigating = true;
-    this.hasShownAutonomyAlert = false; // Initial trip check
-    this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
-    this.saveTripState();
-    this.showRouteList = false;
-    this.centerOnUser();
-    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-    this.isArrivalBarCondensed = false;
-    this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
-    this.cdr.markForCheck();
-  }
+  this.isNavigating = true;
+  this.hasShownAutonomyAlert = false; // Initial trip check
+  this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
+  this.saveTripState();
+  this.showRouteList = false;
+  this.centerOnUser();
+  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+  this.isArrivalBarCondensed = false;
+  this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
+  this.cdr.markForCheck();
+}
 
-  showFullArrivalBar(): void {
-    this.isArrivalBarCondensed = false;
-    this.cdr.markForCheck();
-    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-    this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
-  }
+showFullArrivalBar(): void {
+  this.isArrivalBarCondensed = false;
+  this.cdr.markForCheck();
+  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+  this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
+}
 
-  endTrip(): void {
-    this.isNavigating = false;
-    this.isArrivalBarCondensed = false;
-    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-    if (this.activeVehicle) this.vehicleService.saveActiveTrip(this.activeVehicle.id, null).subscribe();
-    localStorage.removeItem('smartFuel_activeTrip');
-    this.destination = null; this.searchQuery = '';
-    this.destinationName = 'Destino seleccionado';
-    this.hasShownAutonomyAlert = false;
-    this.hasShownLowFuelAlert = false;
-    this.cachedSmartStops = [];
-    this.mapService.clearRouteAndMarkers();
-    this.cdr.markForCheck();
-  }
+endTrip(): void {
+  this.isNavigating = false;
+  this.isArrivalBarCondensed = false;
+  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+  if(this.activeVehicle) this.vehicleService.saveActiveTrip(this.activeVehicle.id, null).subscribe();
+  localStorage.removeItem('smartFuel_activeTrip');
+  this.destination = null; this.searchQuery = '';
+  this.destinationName = 'Destino seleccionado';
+  this.hasShownAutonomyAlert = false;
+  this.hasShownLowFuelAlert = false;
+  this.cachedSmartStops = [];
+  this.mapService.clearRouteAndMarkers();
+  this.cdr.markForCheck();
+}
 }

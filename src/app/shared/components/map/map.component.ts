@@ -324,6 +324,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         data: geojson,
       });
 
+      // Capa de tráfico (opcional, si el estilo lo soporta)
+      // Como estamos usando CARTO Voyager, no tiene capa de tráfico nativa fácil de activar vía JS
+      // Pero podemos simular una visualización de congestión si tuviéramos los datos.
+      // Por ahora, activaremos la visualización de tráfico estándar de MapLibre si el estilo es compatible.
+
       this.map.addLayer({
         id: layerId,
         type: 'line',

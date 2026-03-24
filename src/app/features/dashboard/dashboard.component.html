@@ -139,8 +139,8 @@
   </div>
 
   <!-- Fuel Refill Modal -->
-  <app-fuel-refill
-    *ngIf="showRefillModal"
-    (closeEvent)="toggleRefillModal(false)">
-  </app-fuel-refill>
+   @if(showRefillModal){
+     <app-fuel-refill
+     (closeEvent)="toggleRefillModal(false)"/>
+  }
 }
