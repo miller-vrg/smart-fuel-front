@@ -823,11 +823,20 @@ export class NavigateComponent implements OnInit, OnDestroy {
           }
 
           const popupHtml = `
-            <div style="font-family: 'Montserrat', sans-serif; text-align:center; min-width:140px; padding:8px; background: white; border-radius: 12px;">
-               <div style="background: var(--primary-container); color: var(--on-primary-container); padding: 6px; border-radius: 8px; margin-bottom: 4px;">
-                 <strong style="font-size:13px; display:block;">${stationToMark.name}</strong>
-               </div>
-               <span style="font-size:11px; color:#666; font-weight: 500;">${stationToMark.brand}</span>
+            <div class="stop-popup-container">
+              <div class="stop-popup-header">
+                <div class="stop-popup-icon">
+                  <span class="material-symbols-outlined">local_gas_station</span>
+                </div>
+                <div class="stop-popup-title">${stationToMark.name}</div>
+              </div>
+              <div class="stop-popup-address">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>${stationToMark.display_name || 'Estación de servicio cercana'}</span>
+              </div>
+              <div class="stop-popup-footer">
+                <span class="stop-popup-tag">Sugerida</span>
+              </div>
             </div>`;
 
           this.mapService.setSmartStopMarker(

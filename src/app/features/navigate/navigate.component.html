@@ -281,7 +281,7 @@
 
             <!-- Fuel Detail Bubble -->
             @if (showFuelDetail && activeVehicle && isShowDetailsCurrentFuel()) {
-              <div class="fuel-detail-bubble" (click)="showDetailsCurrentFuel();$event.stopPropagation()">
+              <div class="fuel-detail-bubble" (click)="$event.stopPropagation()">
                 <div class="detail-row">
                   <span class="detail-row__label">Tanque</span>
                   <span class="detail-row__val">{{ activeVehicle.fuelCapacityGallons | number:'1.1-1' }} Gal</span>
