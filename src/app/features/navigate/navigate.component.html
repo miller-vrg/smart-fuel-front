@@ -187,9 +187,9 @@
                 <span class="material-symbols-outlined">route</span>
               </button>
               @if (isAutonomyCritical) {
-                <div class="arrival-bar__inline-btn arrival-bar__inline-btn--alert">
+                <button class="arrival-bar__inline-btn arrival-bar__inline-btn--alert" (click)="openRouteList(); $event.stopPropagation()">
                   <span class="material-symbols-outlined">local_gas_station</span>
-                </div>
+                </button>
               }
             </div>
             <div class="arrival-bar__eta">

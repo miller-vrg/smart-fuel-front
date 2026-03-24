@@ -730,7 +730,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   private async evaluateTripRules(): Promise<void> {
     if (!this.destination || !this.routeDistance || !this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) {
-      this.isAutonomyCritical = false; return;
+      return;
     }
 
     const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
@@ -738,13 +738,9 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const routeKm = parseFloat(this.routeDistance);
 
-    // Autonomía "segura" actual
     const safeCurrentAutonomy = currentAutonomy - kmBefore;
-
-    // Es crítico si la ruta es más larga que lo que tenemos ahora menos el margen
     this.isAutonomyCritical = routeKm > safeCurrentAutonomy;
 
-    // Si ya tenemos paradas calculadas para esta ruta, no repetimos el proceso
     if (this.cachedSmartStops.length > 0) return;
 
     this.isEvaluatingRules = true;
@@ -753,24 +749,14 @@ export class NavigateComponent implements OnInit, OnDestroy {
     try {
       if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
         const brandPreference = this.userPreferences.preferences?.[0]?.brandName;
-
-        // Calcular puntos de parada
-        // 1. La primera parada debe ser antes de agotar el combustible actual
-        // 2. Las siguientes paradas se calculan asumiendo tanque lleno
         let stopsCoords: number[][] = [];
 
-        // Primera parada (distancia actual segura)
         let accumulatedKm = Math.max(5, safeCurrentAutonomy);
-
         while (accumulatedKm < routeKm) {
           const ratio = accumulatedKm / routeKm;
           const idx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.98));
           stopsCoords.push(this.detailedRouteCoords[idx]);
-
-          // Siguiente parada será después de un tanque lleno (menos el margen)
           accumulatedKm += (fullAutonomy - kmBefore);
-
-          // Evitar bucles infinitos si la autonomía es muy baja
           if (fullAutonomy <= kmBefore) break;
         }
 
@@ -783,15 +769,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
           this.hasShownAutonomyAlert = true;
         }
 
-        for (const coord of stopsCoords) {
-          // Búsqueda real de estaciones cerca de este punto de la ruta
-          const stations = await this.findGasStationsNear(coord[1], coord[0], brandPreference);
+        // Search all stations in parallel to speed up and avoid race conditions
+        const searchPromises = stopsCoords.map(coord => this.findGasStationsNear(coord[1], coord[0], brandPreference));
+        const searchResults = await Promise.all(searchPromises);
 
+        searchResults.forEach((stations, i) => {
+          const coord = stopsCoords[i];
           let stationToMark;
           if (stations && stations.length > 0) {
             stationToMark = stations[0];
           } else {
-            // Fallback: Si no hay resultados de la API, usamos el punto de la ruta
             stationToMark = {
               name: brandPreference ? `Estación ${brandPreference}` : 'Estación de Servicio',
               brand: brandPreference || 'Combustible',
@@ -801,17 +788,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
           }
 
           const popupHtml = `
-            <div style="font-family: 'Montserrat', sans-serif; text-align:center; min-width:160px; padding:12px; background: white; border-radius: 16px;">
-               <div style="background: var(--primary-container); color: var(--on-primary-container); padding: 8px; border-radius: 12px; margin-bottom: 8px;">
-                 <strong style="font-size:14px; display:block;">${stationToMark.name}</strong>
+            <div style="font-family: 'Montserrat', sans-serif; text-align:center; min-width:140px; padding:8px; background: white; border-radius: 12px;">
+               <div style="color: var(--on-primary-container); margin-bottom: 4px;">
+                 <strong style="font-size:13px; display:block;">${stationToMark.name}</strong>
                </div>
-               <span style="font-size:12px; color:#666; font-weight: 500;">${stationToMark.brand}</span><br>
-               <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;">
-                 <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${stationToMark.lon}, lat: ${stationToMark.lat}}}))"
-                         style="padding:10px 16px; background:#006C53; color:white; border:none; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%; box-shadow: 0 4px 8px rgba(0,108,83,0.3);">
-                    ⛽ Agregar Parada
-                 </button>
-               </div>
+               <span style="font-size:11px; color:#666; font-weight: 500;">${stationToMark.display_name}</span>
             </div>`;
 
           this.mapService.setSmartStopMarker(
@@ -828,7 +809,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
             lng: parseFloat(stationToMark.lon),
             alerted: false
           });
-        }
+        });
       }
     } finally {
       this.isEvaluatingRules = false;
