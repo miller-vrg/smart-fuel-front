@@ -262,6 +262,13 @@
             <span class="material-symbols-outlined">route</span>
           </div>
 
+          @if (isAutonomyCritical && cachedSmartStops.length > 0) {
+            <div class="hud-circle hud-circle--stops" (click)="toggleStopsList(); $event.stopPropagation()">
+              <span class="material-symbols-outlined">local_gas_station</span>
+              <span class="hud-circle__badge">{{ cachedSmartStops.length }}</span>
+            </div>
+          }
+
           <div class="hud-circle hud-circle--fuel" (click)="showFuelDetail = !showFuelDetail" (click)="showDetailsCurrentFuel(); $event.stopPropagation()" >
             <svg viewBox="0 0 48 48" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
               <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(150,150,150,0.2)" stroke-width="4"/>

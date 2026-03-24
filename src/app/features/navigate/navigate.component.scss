@@ -711,6 +711,24 @@
     text-transform: uppercase;
   }
 
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--primary);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--surface-container-lowest);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
   &--speed {
     border-color: var(--primary);
 
@@ -774,6 +792,14 @@
     .material-symbols-outlined {
       font-size: 20px;
     }
+  }
+}
+
+.hud-circle--stops {
+  color: var(--primary);
+  border-color: var(--primary);
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1;
   }
 }
 
