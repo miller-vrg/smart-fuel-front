@@ -143,13 +143,19 @@
 
       <div class="stops-list-sheet__content">
         @for (stop of cachedSmartStops; track $index) {
-          <div class="stop-list-item" (click)="centerOnStop(stop)">
-            <div class="stop-list-item__icon-box" [class.stop-list-item__icon-box--done]="stop.refilled">
-              <span class="material-symbols-outlined">{{ stop.refilled ? 'check_circle' : 'ev_station' }}</span>
+          <div class="stop-list-item" [class.stop-list-item--warning]="!stop.isReachable" (click)="centerOnStop(stop)">
+            <div class="stop-list-item__icon-box" [class.stop-list-item__icon-box--done]="stop.refilled" [class.stop-list-item__icon-box--warning]="!stop.isReachable">
+              <span class="material-symbols-outlined">{{ stop.refilled ? 'check_circle' : (stop.isReachable ? 'ev_station' : 'warning') }}</span>
             </div>
             <div class="stop-list-item__info">
               <span class="stop-list-item__name">{{ stop.name }}</span>
-              <span class="stop-list-item__brand">{{ stop.brand }}</span>
+              <div class="stop-list-item__meta">
+                <span class="stop-list-item__brand">{{ stop.brand }}</span>
+                <span class="stop-list-item__dist">• {{ stop.distance | number:'1.1-1' }} km</span>
+              </div>
+              @if (!stop.isReachable) {
+                <span class="stop-list-item__warning-text">Fuera de rango actual</span>
+              }
             </div>
             <span class="material-symbols-outlined stop-list-item__arrow">chevron_right</span>
           </div>

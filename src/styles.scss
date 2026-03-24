@@ -329,6 +329,31 @@ app-root {
     padding: 16px;
     min-width: 200px;
     font-family: var(--font-body);
+    transition: background 0.3s;
+
+    &--warning {
+      background: rgba(255, 240, 240, 0.95) !important;
+      border-left: 4px solid var(--error) !important;
+    }
+
+    .stop-popup-warning {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--error-container);
+      color: var(--error);
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+
+      .material-symbols-outlined {
+        font-size: 16px;
+        font-variation-settings: 'FILL' 1;
+      }
+    }
 
     .stop-popup-header {
       display: flex;

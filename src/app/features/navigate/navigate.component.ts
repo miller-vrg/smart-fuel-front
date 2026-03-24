@@ -180,7 +180,6 @@ export class NavigateComponent implements OnInit, OnDestroy {
     if (fuelPercent < 15 || currentAutonomy < 20) {
       this.isAutonomyCritical = true;
 
-      // Solo buscar si no tenemos paradas cacheadas o si la última búsqueda fue hace más de 2 min
       if (this.cachedSmartStops.length === 0) {
         this.isEvaluatingRules = true;
         try {
@@ -188,30 +187,44 @@ export class NavigateComponent implements OnInit, OnDestroy {
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          // Radio aumentado para proactivo (20km) para asegurar que encuentre algo incluso si está lejos
-          const stations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.2);
-          if (stations && stations.length > 0) {
-            const station = stations[0];
-            this.mapService.setSmartStopMarker(
-              parseFloat(station.lon),
-              parseFloat(station.lat),
-              'local_gas_station',
-              this.generatePopupHtml(station)
-            );
-            this.cachedSmartStops = [{
-              name: station.name,
-              brand: station.brand || 'Combustible',
-              lat: parseFloat(station.lat),
-              lng: parseFloat(station.lon),
-              display_name: station.display_name
-            }];
+          // 1. Buscar estaciones preferidas en un radio amplio (30km)
+          const allStations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.3);
+
+          if (allStations && allStations.length > 0) {
+            this.mapService.clearStopMarkers();
+            this.cachedSmartStops = [];
+
+            // Procesar las estaciones encontradas para validar autonomía
+            for (const station of allStations.slice(0, 3)) { // Tomamos las top 3
+              const dist = this.calculateDistance(pos, { lat: parseFloat(station.lat), lng: parseFloat(station.lon) });
+              const isReachable = dist < currentAutonomy;
+
+              const stopData = {
+                name: station.name,
+                brand: station.brand || 'Combustible',
+                lat: parseFloat(station.lat),
+                lng: parseFloat(station.lon),
+                display_name: station.display_name,
+                distance: dist,
+                isReachable: isReachable
+              };
+
+              this.mapService.setSmartStopMarker(
+                stopData.lng,
+                stopData.lat,
+                'local_gas_station',
+                this.generatePopupHtml(stopData)
+              );
+              this.cachedSmartStops.push(stopData);
+            }
 
             if (!this.hasShownLowFuelAlert) {
-              this.triggerActiveNotification(
-                'Combustible Crítico',
-                `Nivel bajo (${Math.round(fuelPercent)}%). Gasolinera más cercana marcada.`,
-                'anomaly_alert'
-              );
+              const reachableCount = this.cachedSmartStops.filter(s => s.isReachable).length;
+              const msg = reachableCount > 0
+                ? `Nivel bajo (${Math.round(fuelPercent)}%). Se han marcado ${this.cachedSmartStops.length} opciones.`
+                : `¡CUIDADO! Las gasolineras están fuera de tu rango actual (${Math.round(currentAutonomy)}km).`;
+
+              this.triggerActiveNotification('Combustible Crítico', msg, 'anomaly_alert');
               this.hasShownLowFuelAlert = true;
               this.showStopsList = true;
             }
@@ -1028,21 +1041,27 @@ export class NavigateComponent implements OnInit, OnDestroy {
           const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands, 0.03);
           if (stations && stations.length > 0) {
             const stationToMark = stations[0];
-            this.mapService.setSmartStopMarker(
-              parseFloat(stationToMark.lon),
-              parseFloat(stationToMark.lat),
-              'local_gas_station',
-              this.generatePopupHtml(stationToMark)
-            );
+            const dist = this.userPosition ? this.calculateDistance(this.userPosition, { lat: parseFloat(stationToMark.lat), lng: parseFloat(stationToMark.lon) }) : 0;
 
-            this.cachedSmartStops.push({
+            const stopData = {
               name: stationToMark.name,
               brand: stationToMark.brand || 'Combustible',
               lat: parseFloat(stationToMark.lat),
               lng: parseFloat(stationToMark.lon),
               display_name: stationToMark.display_name,
+              distance: dist,
+              isReachable: dist < currentAutonomy,
               alerted: false
-            });
+            };
+
+            this.mapService.setSmartStopMarker(
+              stopData.lng,
+              stopData.lat,
+              'local_gas_station',
+              this.generatePopupHtml(stopData)
+            );
+
+            this.cachedSmartStops.push(stopData);
           }
         }
       }
@@ -1057,39 +1076,57 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const btnClass = isDetour ? 'stop-popup-go-btn stop-popup-go-btn--detour' : 'stop-popup-go-btn';
     const btnText = isDetour ? 'Desviarse' : 'Ir Ahora';
 
+    // Warning logic
+    const warningHtml = !station.isReachable
+      ? `<div class="stop-popup-warning">
+           <span class="material-symbols-outlined">warning</span>
+           <span>Es posible que no puedas llegar con tu combustible actual</span>
+         </div>`
+      : '';
+
     return `
-      <div class="stop-popup-container">
+      <div class="stop-popup-container ${!station.isReachable ? 'stop-popup-container--warning' : ''}">
         <div class="stop-popup-header">
           <div class="stop-popup-icon">
             <span class="material-symbols-outlined">local_gas_station</span>
           </div>
           <div class="stop-popup-title">${station.name || 'Estación de Servicio'}</div>
         </div>
+        ${warningHtml}
         <div class="stop-popup-address">
           <span class="material-symbols-outlined">location_on</span>
           <span>${station.display_name || 'Ubicación encontrada'}</span>
         </div>
         <div class="stop-popup-footer">
-          <button class="${btnClass}" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lon}, name: '${station.name}'}}))">
+          <button class="${btnClass}" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lng}, name: '${station.name.replace(/'/g, "\\'")}'}}))">
             ${btnText}
           </button>
-          <span class="stop-popup-tag">Sugerida</span>
+          <span class="stop-popup-tag">A ${station.distance.toFixed(1)} km</span>
         </div>
       </div>`;
   }
 
   private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[], customDelta?: number): Promise<any[]> {
-    // 1. Intentar buscar por cada marca favorita en orden de prioridad
+    let combinedResults: any[] = [];
+
+    // 1. Intentar buscar por cada marca favorita
     for (const brand of favoriteBrands) {
-      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, customDelta || 0.08); // ~8km radio por defecto
-      if (results && results.length > 0) return results;
+      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, customDelta || 0.08);
+      if (results && results.length > 0) {
+        combinedResults = [...combinedResults, ...results];
+        if (combinedResults.length >= 5) break; // Límite de 5 para no saturar
+      }
     }
 
-    // 2. Si no hay favoritas o no se encontró ninguna, buscar cualquier gasolinera cercana
-    const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12); // ~12km radio por defecto
-    if (generalResults && generalResults.length > 0) return generalResults;
+    // 2. Si no hay suficientes resultados de favoritas, buscar generales
+    if (combinedResults.length < 3) {
+      const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12);
+      if (generalResults && generalResults.length > 0) {
+        combinedResults = [...combinedResults, ...generalResults];
+      }
+    }
 
-    return [];
+    return combinedResults;
   }
 
   private async queryNominatim(lat: number, lng: number, query: string, delta: number): Promise<any[]> {

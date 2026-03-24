@@ -1186,6 +1186,11 @@
   transition: all 0.2s;
   cursor: pointer;
 
+  &--warning {
+    background: rgba(255, 235, 235, 0.6) !important;
+    border-left: 4px solid var(--error) !important;
+  }
+
   &:hover {
     background: var(--surface-container-high);
     border-color: var(--primary);
@@ -1209,6 +1214,26 @@
       background: var(--secondary-container);
       color: var(--on-secondary-container);
     }
+
+    &--warning {
+      background: var(--error-container);
+      color: var(--error);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+  }
+
+  &__warning-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--error);
+    margin-top: 2px;
   }
 
   &__info {
