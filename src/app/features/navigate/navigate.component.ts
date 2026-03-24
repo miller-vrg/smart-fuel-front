@@ -180,22 +180,26 @@ export class NavigateComponent implements OnInit, OnDestroy {
     if (fuelPercent < 15 || currentAutonomy < 20) {
       this.isAutonomyCritical = true;
 
+      // Si no tenemos paradas o si las que hay son de una búsqueda muy vieja (más de 5 min)
+      // O si simplemente no hay paradas, buscamos.
       if (this.cachedSmartStops.length === 0) {
         this.isEvaluatingRules = true;
+        console.log(`[SmartFuel] Autonomía crítica detectada (${fuelPercent.toFixed(1)}%). Buscando estaciones...`);
+
         try {
           const favoriteBrands = (this.userPreferences.preferences || [])
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          // 1. Buscar estaciones preferidas en un radio amplio (30km)
+          // Intentar buscar con radio amplio (30km)
           const allStations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.3);
 
           if (allStations && allStations.length > 0) {
+            console.log(`[SmartFuel] Se encontraron ${allStations.length} estaciones proactivas.`);
             this.mapService.clearStopMarkers();
             this.cachedSmartStops = [];
 
-            // Procesar las estaciones encontradas para validar autonomía
-            for (const station of allStations.slice(0, 3)) { // Tomamos las top 3
+            for (const station of allStations.slice(0, 3)) {
               const dist = this.calculateDistance(pos, { lat: parseFloat(station.lat), lng: parseFloat(station.lon) });
               const isReachable = dist < currentAutonomy;
 
@@ -221,22 +225,31 @@ export class NavigateComponent implements OnInit, OnDestroy {
             if (!this.hasShownLowFuelAlert) {
               const reachableCount = this.cachedSmartStops.filter(s => s.isReachable).length;
               const msg = reachableCount > 0
-                ? `Nivel bajo (${Math.round(fuelPercent)}%). Se han marcado ${this.cachedSmartStops.length} opciones.`
-                : `¡CUIDADO! Las gasolineras están fuera de tu rango actual (${Math.round(currentAutonomy)}km).`;
+                ? `Combustible bajo (${Math.round(fuelPercent)}%). Gasolineras cercanas marcadas en el mapa.`
+                : `¡ALERTA! Combustible crítico y las estaciones están lejos de tu rango actual.`;
 
               this.triggerActiveNotification('Combustible Crítico', msg, 'anomaly_alert');
               this.hasShownLowFuelAlert = true;
               this.showStopsList = true;
             }
+          } else {
+            console.warn('[SmartFuel] No se encontraron estaciones en un radio de 30km.');
           }
+        } catch (error) {
+          console.error('[SmartFuel] Error en búsqueda proactiva:', error);
         } finally {
           this.isEvaluatingRules = false;
           this.cdr.markForCheck();
         }
       }
     } else {
-      this.isAutonomyCritical = false;
-      this.hasShownLowFuelAlert = false;
+      // Si el combustible subió (tanqueo), resetear alertas y paradas proactivas
+      if (this.isAutonomyCritical) {
+        this.isAutonomyCritical = false;
+        this.hasShownLowFuelAlert = false;
+        this.cachedSmartStops = [];
+        this.mapService.clearStopMarkers();
+      }
     }
   }
 
@@ -440,68 +453,23 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        this.userPosition = {
+        const currentPos: UserPosition = {
           lng: pos.coords.longitude,
           lat: pos.coords.latitude,
           accuracy: pos.coords.accuracy,
           heading: pos.coords.heading ?? undefined,
+          speed: pos.coords.speed ?? 0
         };
-        this.currentSpeed = Math.round((pos.coords.speed ?? 0) * 3.6); // m/s to km/h
 
         const isFirstLocation = !this.locationReady;
-        this.locationReady = true;
-        this.geoError = null;
 
-        this.mapService.setUserLocation(this.userPosition.lng, this.userPosition.lat, this.userPosition.heading);
-
-        if (this.isNavigating && this.activeVehicle) {
-          this.processNavigationUpdate(this.userPosition);
-        }
+        // CENTRALIZAR: Llamar a onUserLocation para manejar toda la lógica
+        this.onUserLocation(currentPos);
 
         if (isFirstLocation) {
-          this.mapService.flyTo(this.userPosition.lng, this.userPosition.lat, 15);
-
-          const savedStr = localStorage.getItem('smartFuel_activeTrip');
-          if (savedStr) {
-            try {
-              const state = JSON.parse(savedStr);
-              this.destination = state.destination;
-              this.destinationName = state.destinationName;
-              this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
-
-              setTimeout(() => {
-                const vehicle = this.availableVehicles.find(v => v.id === state.vehicleId) || this.activeVehicle;
-                if (state.destination && state.destination.lng) {
-                  this.destination = state.destination;
-                  this.destinationName = state.destinationName || 'Destino';
-                  this.mapService.setDestinationMarker(this.destination?.lng as number, this.destination?.lat as number);
-
-                  if (this.userPosition && this.destination) {
-                    this.calculateRoute(this.userPosition, this.destination).then(() => {
-                      if (state.selectedRouteIndex !== undefined) {
-                        this.selectRouteIndex(state.selectedRouteIndex);
-                      }
-                      if (state.isNavigating) {
-                        this.isNavigating = true;
-                        this.showRouteList = false;
-                        this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
-                      } else {
-                        this.showRouteList = true;
-                      }
-                      if (vehicle) this.confirmVehicle(vehicle);
-                      this.cdr.markForCheck();
-                    });
-                  }
-                }
-              }, 500);
-            } catch (e) {
-              console.error('Error restaurando viaje', e);
-            }
-          }
+          this.mapService.flyTo(currentPos.lng, currentPos.lat, 15);
+          this.restoreSavedTrip();
         }
-
-        this.lastPosition = this.userPosition;
-        this.cdr.markForCheck();
       },
       (err) => {
         this.geoError = err.message;
@@ -509,6 +477,40 @@ export class NavigateComponent implements OnInit, OnDestroy {
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
+  }
+
+  private restoreSavedTrip(): void {
+    const savedStr = localStorage.getItem('smartFuel_activeTrip');
+    if (!savedStr) return;
+
+    try {
+      const state = JSON.parse(savedStr);
+      this.destination = state.destination;
+      this.destinationName = state.destinationName;
+      this.mapService.setDestinationMarker(this.destination!.lng, this.destination!.lat);
+
+      setTimeout(() => {
+        const vehicle = this.availableVehicles.find(v => v.id === state.vehicleId) || this.activeVehicle;
+        if (this.userPosition && this.destination) {
+          this.calculateRoute(this.userPosition, this.destination).then(() => {
+            if (state.selectedRouteIndex !== undefined) {
+              this.selectRouteIndex(state.selectedRouteIndex);
+            }
+            if (state.isNavigating) {
+              this.isNavigating = true;
+              this.showRouteList = false;
+              this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
+            } else {
+              this.showRouteList = true;
+            }
+            if (vehicle) this.confirmVehicle(vehicle);
+            this.cdr.markForCheck();
+          });
+        }
+      }, 500);
+    } catch (e) {
+      console.error('Error restaurando viaje', e);
+    }
   }
 
   private stopWatchingPosition(): void {
