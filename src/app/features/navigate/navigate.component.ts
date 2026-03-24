@@ -176,53 +176,68 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
     const fuelPercent = (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons!) * 100;
 
-    // Umbral: < 15% o < 20km de autonomía
     if (fuelPercent < 15 || currentAutonomy < 20) {
       this.isAutonomyCritical = true;
 
       if (this.cachedSmartStops.length === 0) {
         this.isEvaluatingRules = true;
-        console.log(`[SmartFuel] Autonomía crítica (${fuelPercent.toFixed(1)}%). Buscando lo más cercano...`);
-
         try {
           const favoriteBrands = (this.userPreferences.preferences || [])
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          // 1. Obtener candidatos (favoritos y generales)
-          let allCandidates = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.25); // ~25km radio
+          const allCandidates = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.3);
 
           if (allCandidates && allCandidates.length > 0) {
-            // 2. Calcular distancias y ORDENAR ESTRICTAMENTE por cercanía
-            const sortedStations = allCandidates
-              .map(s => {
-                const dist = this.calculateDistance(pos, { lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
-                return { ...s, dist };
-              })
-              .sort((a, b) => a.dist - b.dist); // El más cercano primero
+            // 1. Clasificar y ordenar candidatos
+            const processed = allCandidates.map(s => {
+              const dist = this.calculateDistance(pos, { lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
+              const isFavorite = favoriteBrands.some(brand =>
+                s.name.toLowerCase().includes(brand.toLowerCase()) ||
+                (s.brand && s.brand.toLowerCase().includes(brand.toLowerCase()))
+              );
+              return { ...s, dist, isFavorite, isReachable: dist < currentAutonomy };
+            }).sort((a, b) => a.dist - b.dist);
 
-            console.log(`[SmartFuel] Encontradas ${sortedStations.length} estaciones. La más cercana está a ${sortedStations[0].dist.toFixed(2)}km`);
+            const favorites = processed.filter(s => s.isFavorite);
+            const generics = processed.filter(s => !s.isFavorite);
+
+            let finalSelection: any[] = [];
+            const nearestFav = favorites[0];
+
+            // 2. Lógica de Selección Inteligente
+            // Si la favorita más cercana es alcanzable con margen (80% de autonomía), la priorizamos
+            if (nearestFav && nearestFav.dist < (currentAutonomy * 0.8)) {
+              finalSelection = favorites.slice(0, 3);
+              // Si no hay 3 favoritas, rellenamos con la genérica más cercana
+              if (finalSelection.length < 3 && generics.length > 0) {
+                finalSelection.push(generics[0]);
+              }
+            } else {
+              // Si no hay favoritas o están muy lejos/inalcanzables, la absoluta más cercana es de EMERGENCIA
+              if (processed.length > 0) {
+                const absoluteNearest = processed[0];
+                finalSelection.push({ ...absoluteNearest, isEmergency: !absoluteNearest.isFavorite });
+                // Añadimos las favoritas de todas formas para que el usuario decida
+                const otherFavs = favorites.filter(f => f.place_id !== absoluteNearest.place_id).slice(0, 2);
+                finalSelection = [...finalSelection, ...otherFavs];
+              }
+            }
 
             this.mapService.clearStopMarkers();
             this.cachedSmartStops = [];
 
-            // 3. Mostrar las 3 más cercanas (sin importar si son favoritas o no, la cercanía es prioridad en crítico)
-            for (const station of sortedStations.slice(0, 3)) {
-              const isReachable = station.dist < currentAutonomy;
-              const isFavorite = favoriteBrands.some(brand =>
-                station.name.toLowerCase().includes(brand.toLowerCase()) ||
-                (station.brand && station.brand.toLowerCase().includes(brand.toLowerCase()))
-              );
-
+            for (const station of finalSelection) {
               const stopData = {
                 name: station.name,
-                brand: station.brand || (isFavorite ? 'Tu Preferida' : 'Gasolinera'),
+                brand: station.brand || (station.isFavorite ? 'Tu Preferida' : 'Gasolinera'),
                 lat: parseFloat(station.lat),
                 lng: parseFloat(station.lon),
                 display_name: station.display_name,
                 distance: station.dist,
-                isReachable: isReachable,
-                isFavorite: isFavorite
+                isReachable: station.isReachable,
+                isFavorite: station.isFavorite,
+                isEmergency: station.isEmergency || false
               };
 
               this.mapService.setSmartStopMarker(
@@ -236,17 +251,18 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
             if (!this.hasShownLowFuelAlert) {
               const closest = this.cachedSmartStops[0];
-              const msg = closest.isReachable
-                ? `Combustible bajo. La bomba más cercana está a ${closest.distance.toFixed(1)} km.`
-                : `¡ALERTA! La bomba más cercana (${closest.distance.toFixed(1)} km) está fuera de tu alcance actual.`;
+              let msg = `Combustible bajo (${Math.round(fuelPercent)}%). `;
+              if (closest.isEmergency) {
+                msg += `Tu preferida está lejos. Sugiriendo parada de emergencia a ${closest.distance.toFixed(1)} km.`;
+              } else {
+                msg += `Bomba preferida a ${closest.distance.toFixed(1)} km.`;
+              }
 
               this.triggerActiveNotification('Combustible Crítico', msg, 'anomaly_alert');
               this.hasShownLowFuelAlert = true;
               this.showStopsList = true;
             }
           }
-        } catch (error) {
-          console.error('[SmartFuel] Error en búsqueda proactiva:', error);
         } finally {
           this.isEvaluatingRules = false;
           this.cdr.markForCheck();
@@ -1087,11 +1103,22 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const btnClass = isDetour ? 'stop-popup-go-btn stop-popup-go-btn--detour' : 'stop-popup-go-btn';
     const btnText = isDetour ? 'Desviarse' : 'Ir Ahora';
 
-    // Warning logic
+    // Etiqueta de prioridad
+    let tagText = `A ${station.distance.toFixed(1)} km`;
+    let tagClass = 'stop-popup-tag';
+
+    if (station.isEmergency) {
+      tagText = 'EMERGENCIA';
+      tagClass += ' stop-popup-tag--emergency';
+    } else if (station.isFavorite) {
+      tagText = 'PREFERIDA';
+      tagClass += ' stop-popup-tag--favorite';
+    }
+
     const warningHtml = !station.isReachable
       ? `<div class="stop-popup-warning">
            <span class="material-symbols-outlined">warning</span>
-           <span>Es posible que no puedas llegar con tu combustible actual</span>
+           <span>Rango insuficiente para llegar</span>
          </div>`
       : '';
 
@@ -1112,7 +1139,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
           <button class="${btnClass}" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lng}, name: '${station.name.replace(/'/g, "\\'")}'}}))">
             ${btnText}
           </button>
-          <span class="stop-popup-tag">A ${station.distance.toFixed(1)} km</span>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+            <span class="${tagClass}">${tagText}</span>
+            <span style="font-size:9px; font-weight:700; color:var(--on-surface-variant)">${station.distance.toFixed(1)} km</span>
+          </div>
         </div>
       </div>`;
   }

@@ -410,10 +410,22 @@ app-root {
         font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
-        color: var(--primary);
-        background: var(--primary-container);
+        color: var(--on-surface-variant);
+        background: var(--surface-container-high);
         padding: 2px 8px;
         border-radius: 10px;
+
+        &--favorite {
+          color: #006C53;
+          background: #E0F2F1;
+          border: 1px solid #B2DFDB;
+        }
+
+        &--emergency {
+          color: #D32F2F;
+          background: #FFEBEE;
+          border: 1px solid #FFCDD2;
+        }
       }
 
       .stop-popup-go-btn {
