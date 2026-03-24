@@ -485,22 +485,7 @@
     gap: 12px;
     align-items: flex-start;
   }
-}
-
-.hud-circle--fuel-mini {
-  width: 50px !important;
-  height: 50px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-
-  .hud-circle__val {
-    font-size: 0.85rem !important;
-    font-weight: 800;
-  }
-}
-
-  &__divider {
+   &__divider {
     width: 1px;
     height: 32px;
     background: var(--surface-container-high);
@@ -570,6 +555,20 @@
       font-size: 20px;
     }
   }
+}
+
+.hud-circle--fuel-mini {
+  width: 50px !important;
+  height: 50px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+
+  .hud-circle__val {
+    font-size: 0.85rem !important;
+    font-weight: 800;
+  }
+}
 
 .hud-circle {
   width: 56px;
