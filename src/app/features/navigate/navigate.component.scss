@@ -719,16 +719,19 @@
 
 /* ── Search Bar Overlay ───────────────────────── */
 .search-bar {
-  padding: 0px 10px;
-  position: absolute;
-  top: 16px;
-  left: 72px;
-  right: 72px;
-  z-index: 55;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: opacity 0.3s, transform 0.3s;
+    padding: 0 10px;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    z-index: 55;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+    transition: opacity .3s, transform .3s;
 
   &--disabled {
     opacity: 0.5;
@@ -740,13 +743,15 @@
     position: relative;
     display: flex;
     align-items: center;
-    background: var(--surface-container-high);
+    background: var(--background);
     border-radius: var(--radius-full);
     padding: 0 16px;
     height: 56px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px #00000026;
     border: 1px solid var(--outline-variant);
     gap: 12px;
+    width: 100%;
+    max-width: 350px;
   }
 
   &__left {
@@ -923,6 +928,8 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  max-width: 300px;
+  width: 100%;
 
   .search-result-item {
     display: flex;

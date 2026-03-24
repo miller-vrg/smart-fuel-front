@@ -147,6 +147,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     if (this.isNavigating) {
       this.checkStopProximity(currentPos);
+      this.checkTrafficIncidents();
+    } else {
+      // Detección proactiva solo si NO estamos navegando una ruta
+      this.evaluateProactiveFuelCheck(currentPos);
     }
 
     // Update marker
@@ -156,9 +160,66 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.mapService.followUser3D(currentPos.lng, currentPos.lat, currentPos.heading);
 
     this.monitorSpeed();
-    this.evaluateTripRules();
-    this.checkTrafficIncidents();
+    if (this.isNavigating) this.evaluateTripRules();
+
     this.lastPosition = currentPos;
+  }
+
+  private async evaluateProactiveFuelCheck(pos: UserPosition): Promise<void> {
+    if (!this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) return;
+
+    const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
+    const fuelPercent = (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons!) * 100;
+
+    // Umbral: < 15% o < 20km de autonomía
+    if (fuelPercent < 15 || currentAutonomy < 20) {
+      this.isAutonomyCritical = true;
+
+      // Solo buscar si no tenemos paradas cacheadas o si la última búsqueda fue hace más de 2 min
+      if (this.cachedSmartStops.length === 0) {
+        this.isEvaluatingRules = true;
+        try {
+          const favoriteBrands = (this.userPreferences.preferences || [])
+            .sort((a, b) => (a.priority || 99) - (b.priority || 99))
+            .map(p => p.brandName);
+
+          // Radio moderado para proactivo (10km)
+          const stations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.1);
+          if (stations && stations.length > 0) {
+            const station = stations[0];
+            this.mapService.setSmartStopMarker(
+              parseFloat(station.lon),
+              parseFloat(station.lat),
+              'local_gas_station',
+              this.generatePopupHtml(station)
+            );
+            this.cachedSmartStops = [{
+              name: station.name,
+              brand: station.brand || 'Combustible',
+              lat: parseFloat(station.lat),
+              lng: parseFloat(station.lon),
+              display_name: station.display_name
+            }];
+
+            if (!this.hasShownLowFuelAlert) {
+              this.triggerActiveNotification(
+                'Combustible Crítico',
+                `Nivel bajo (${Math.round(fuelPercent)}%). Gasolinera más cercana marcada.`,
+                'anomaly_alert'
+              );
+              this.hasShownLowFuelAlert = true;
+              this.showStopsList = true;
+            }
+          }
+        } finally {
+          this.isEvaluatingRules = false;
+          this.cdr.markForCheck();
+        }
+      }
+    } else {
+      this.isAutonomyCritical = false;
+      this.hasShownLowFuelAlert = false;
+    }
   }
 
   private checkStopProximity(pos: UserPosition): void {
@@ -887,56 +948,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private async evaluateTripRules(): Promise<void> {
-    if (!this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) {
+    if (!this.activeVehicle || !this.userPreferences || this.isEvaluatingRules || !this.destination || !this.routeDistance) {
       return;
     }
 
     const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const safeCurrentAutonomy = currentAutonomy - kmBefore;
-
-    // 1. Detección Proactiva (Sin ruta activa)
-    const fuelPercent = (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons!) * 100;
-    const isFuelCritical = safeCurrentAutonomy < 20 || fuelPercent < 15;
-
-    if (!this.destination && isFuelCritical && this.userPosition) {
-      this.isAutonomyCritical = true;
-      if (this.cachedSmartStops.length === 0) {
-        this.triggerActiveNotification(
-          'Combustible Crítico',
-          `Tu nivel de combustible (${Math.round(fuelPercent)}%) es bajo. Buscando gasolineras cercanas.`,
-          'anomaly_alert'
-        );
-        const favoriteBrands = (this.userPreferences.preferences || [])
-          .sort((a, b) => (a.priority || 99) - (b.priority || 99))
-          .map(p => p.brandName);
-
-        // Aumentamos el radio de búsqueda (delta) a 0.15 (~15km) para la detección proactiva
-        const stations = await this.findBestGasStationNear(this.userPosition.lat, this.userPosition.lng, favoriteBrands, 0.15);
-        if (stations && stations.length > 0) {
-          const station = stations[0];
-          this.mapService.setSmartStopMarker(
-            parseFloat(station.lon),
-            parseFloat(station.lat),
-            'local_gas_station',
-            this.generatePopupHtml(station)
-          );
-          this.cachedSmartStops = [{
-            name: station.name,
-            brand: station.brand || 'Combustible',
-            lat: parseFloat(station.lat),
-            lng: parseFloat(station.lon),
-            display_name: station.display_name
-          }];
-          this.showStopsList = true;
-        }
-      }
-      return;
-    }
-
-    if (!this.destination || !this.routeDistance) return;
-
     const routeKm = parseFloat(this.routeDistance);
+
     this.isAutonomyCritical = routeKm > safeCurrentAutonomy;
 
     if (this.cachedSmartStops.length > 0) return;
@@ -965,14 +985,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
         if (this.isNavigating && !this.hasShownAutonomyAlert && stopsCoords.length > 0) {
           this.triggerActiveNotification(
             'Autonomía Insuficiente',
-            `Tu combustible actual (~${Math.round(currentAutonomy)}km) no alcanza para la ruta (${Math.round(routeKm)}km). Sugiriendo ${stopsCoords.length} paradas.`,
+            `Tu combustible (~${Math.round(currentAutonomy)}km) no alcanza. Sugiriendo paradas en la ruta.`,
             'smart_stop'
           );
           this.hasShownAutonomyAlert = true;
         }
 
         for (const coord of stopsCoords) {
-          const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands);
+          // RADIO MUY ESTRICTO EN RUTA (3km) para evitar desvíos grandes
+          const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands, 0.03);
           if (stations && stations.length > 0) {
             const stationToMark = stations[0];
             this.mapService.setSmartStopMarker(
