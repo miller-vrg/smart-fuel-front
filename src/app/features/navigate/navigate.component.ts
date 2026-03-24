@@ -783,9 +783,12 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     try {
       if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
-        const brandPreference = this.userPreferences.preferences?.[0]?.brandName;
-        let stopsCoords: number[][] = [];
+        // Extraer marcas favoritas del usuario
+        const favoriteBrands = (this.userPreferences.preferences || [])
+          .sort((a, b) => (a.priority || 99) - (b.priority || 99))
+          .map(p => p.brandName);
 
+        let stopsCoords: number[][] = [];
         let accumulatedKm = Math.max(5, safeCurrentAutonomy);
         while (accumulatedKm < routeKm) {
           const ratio = accumulatedKm / routeKm;
@@ -804,56 +807,45 @@ export class NavigateComponent implements OnInit, OnDestroy {
           this.hasShownAutonomyAlert = true;
         }
 
-        // Search all stations in parallel to speed up and avoid race conditions
-        const searchPromises = stopsCoords.map(coord => this.findGasStationsNear(coord[1], coord[0], brandPreference));
-        const searchResults = await Promise.all(searchPromises);
+        // Buscar estaciones para cada parada respetando prioridades
+        for (const coord of stopsCoords) {
+          const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands);
 
-        searchResults.forEach((stations, i) => {
-          const coord = stopsCoords[i];
-          let stationToMark;
           if (stations && stations.length > 0) {
-            stationToMark = stations[0];
-          } else {
-            stationToMark = {
-              name: brandPreference ? `Estación ${brandPreference}` : 'Estación de Servicio',
-              brand: brandPreference || 'Combustible',
-              lat: coord[1].toString(),
-              lon: coord[0].toString()
-            };
-          }
-
-          const popupHtml = `
-            <div class="stop-popup-container">
-              <div class="stop-popup-header">
-                <div class="stop-popup-icon">
-                  <span class="material-symbols-outlined">local_gas_station</span>
+            const stationToMark = stations[0];
+            const popupHtml = `
+              <div class="stop-popup-container">
+                <div class="stop-popup-header">
+                  <div class="stop-popup-icon">
+                    <span class="material-symbols-outlined">local_gas_station</span>
+                  </div>
+                  <div class="stop-popup-title">${stationToMark.name || 'Estación de Servicio'}</div>
                 </div>
-                <div class="stop-popup-title">${stationToMark.name}</div>
-              </div>
-              <div class="stop-popup-address">
-                <span class="material-symbols-outlined">location_on</span>
-                <span>${stationToMark.display_name || 'Estación de servicio cercana'}</span>
-              </div>
-              <div class="stop-popup-footer">
-                <span class="stop-popup-tag">Sugerida</span>
-              </div>
-            </div>`;
+                <div class="stop-popup-address">
+                  <span class="material-symbols-outlined">location_on</span>
+                  <span>${stationToMark.display_name || 'Ubicación encontrada'}</span>
+                </div>
+                <div class="stop-popup-footer">
+                  <span class="stop-popup-tag">Sugerida</span>
+                </div>
+              </div>`;
 
-          this.mapService.setSmartStopMarker(
-            parseFloat(stationToMark.lon),
-            parseFloat(stationToMark.lat),
-            'local_gas_station',
-            popupHtml
-          );
+            this.mapService.setSmartStopMarker(
+              parseFloat(stationToMark.lon),
+              parseFloat(stationToMark.lat),
+              'local_gas_station',
+              popupHtml
+            );
 
-          this.cachedSmartStops.push({
-            name: stationToMark.name,
-            brand: stationToMark.brand,
-            lat: parseFloat(stationToMark.lat),
-            lng: parseFloat(stationToMark.lon),
-            alerted: false
-          });
-        });
+            this.cachedSmartStops.push({
+              name: stationToMark.name,
+              brand: stationToMark.brand || 'Combustible',
+              lat: parseFloat(stationToMark.lat),
+              lng: parseFloat(stationToMark.lon),
+              alerted: false
+            });
+          }
+        }
       }
     } finally {
       this.isEvaluatingRules = false;
@@ -861,23 +853,29 @@ export class NavigateComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async findGasStationsNear(lat: number, lng: number, brand?: string): Promise<any[]> {
+  private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[]): Promise<any[]> {
+    // 1. Intentar buscar por cada marca favorita en orden de prioridad
+    for (const brand of favoriteBrands) {
+      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, 0.08); // ~8km radio
+      if (results && results.length > 0) return results;
+    }
+
+    // 2. Si no hay favoritas o no se encontró ninguna, buscar cualquier gasolinera cercana
+    const generalResults = await this.queryNominatim(lat, lng, 'gas station', 0.12); // ~12km radio para asegurar encontrar algo
+    if (generalResults && generalResults.length > 0) return generalResults;
+
+    return [];
+  }
+
+  private async queryNominatim(lat: number, lng: number, query: string, delta: number): Promise<any[]> {
     try {
-      // Usar una búsqueda más amplia si hay marca, o genérica si no
-      const query = brand ? `${brand} gas station` : 'gas station';
-
-      // Nominatim con viewbox pequeño alrededor del punto para simular "cerca"
-      const delta = 0.05; // ~5km
       const viewbox = `${lng - delta},${lat + delta},${lng + delta},${lat - delta}`;
-
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&viewbox=${viewbox}&bounded=1`;
 
-      const resp = await fetch(url, {
-        headers: { 'Accept-Language': 'es' }
-      });
+      const resp = await fetch(url, { headers: { 'Accept-Language': 'es' } });
       return await resp.json();
     } catch (e) {
-      console.error('Error buscando estaciones:', e);
+      console.error('Error en Nominatim:', e);
       return [];
     }
   }
