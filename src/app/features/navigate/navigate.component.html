@@ -163,7 +163,39 @@
     <app-fuel-refill (closeEvent)="toggleRefillModal(false)"/>
   }
 
-  <!-- Suggestions Overlay -->
+  <!-- Floating Fuel Gauge — Always visible when on Navigate page -->
+  @if (!isNavigating && activeVehicle) {
+    <div class="floating-fuel-hud" [class.floating-fuel-hud--critical]="isAutonomyCritical" (click)="showFuelDetail = !showFuelDetail; showDetailsCurrentFuel(); $event.stopPropagation()">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+        <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor"
+                [attr.stroke-dasharray]="125.6" [attr.stroke-dashoffset]="fuelDashOffset"
+                stroke-width="6" style="transition:stroke-dashoffset 0.5s ease-in-out, stroke 0.5s;"/>
+      </svg>
+      <div class="floating-fuel-hud__content">
+        <span class="floating-fuel-hud__val" [style.color]="fuelColor">{{ fuelLevelPercent | number:'1.0-0' }}%</span>
+        <span class="floating-fuel-hud__label">Combustible</span>
+      </div>
+
+      <!-- Fuel Detail Bubble -->
+      @if (showFuelDetail && isShowDetailsCurrentFuel()) {
+        <div class="fuel-detail-bubble fuel-detail-bubble--floating" (click)="$event.stopPropagation()">
+          <div class="detail-row">
+            <span class="detail-row__label">Tanque</span>
+            <span class="detail-row__val">{{ activeVehicle.fuelCapacityGallons | number:'1.1-1' }} Gal</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row__label">Actual</span>
+            <span class="detail-row__val">{{ activeVehicle.currentFuelGallons | number:'1.1-1' }} Gal</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row__label">Rango</span>
+            <span class="detail-row__val">~{{ (activeVehicle.currentFuelGallons * activeVehicle.avgKmPerGallon) | number:'1.0-0' }} km</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Alternative Routes List (visible even during navigation if toggled) -->
   @if (possibleRoutes.length > 0 && showRouteList) {

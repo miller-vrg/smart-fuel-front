@@ -188,8 +188,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          // Radio moderado para proactivo (10km)
-          const stations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.1);
+          // Radio aumentado para proactivo (20km) para asegurar que encuentre algo incluso si está lejos
+          const stations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.2);
           if (stations && stations.length > 0) {
             const station = stations[0];
             this.mapService.setSmartStopMarker(

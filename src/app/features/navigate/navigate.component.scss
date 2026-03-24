@@ -279,7 +279,78 @@
   }
 }
 
-/* ── Floating Controls ───────────────────────────── */
+/* ── Floating Fuel HUD (Always Visible) ────────── */
+.floating-fuel-hud {
+  position: absolute;
+  left: 20px;
+  bottom: 120px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &--critical {
+    animation: pulse-red-light 2s infinite;
+    background: rgba(255, 235, 235, 0.9);
+  }
+
+  svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+  }
+
+  &__val {
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+}
+
+.fuel-detail-bubble--floating {
+  position: absolute;
+  bottom: 90px;
+  left: 0;
+  min-width: 140px;
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes pulse-red-light {
+  0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(244, 67, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 .float-controls {
   position: absolute;
   right: 16px;
