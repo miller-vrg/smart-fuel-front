@@ -88,6 +88,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
   showAddVehicleModal = false;
   showSpeedAlert = false;
   showActiveNotification = false;
+  showStopsList = false;
+  showFuelDetail = false;
   activeNotification: any | null = null;
   private notificationTimeout: any = null;
   newVehicleForm: Partial<Vehicle> = {
@@ -153,12 +155,24 @@ export class NavigateComponent implements OnInit, OnDestroy {
     // Handle "Add Stop" from popups
     window.addEventListener('map:setWay', (e: any) => {
       if (e.detail && e.detail.lng && e.detail.lat) {
-        // For now, since we only support A->B, we set the stop as the new destination
-        // but we keep the original destination in mind if needed.
-        // Or simply recalculate route to this new point.
         this.onMapClick(e.detail, true);
       }
     });
+  }
+
+  toggleStopsList() {
+    this.showStopsList = !this.showStopsList;
+    if (this.showStopsList) this.showRouteList = false;
+    this.cdr.markForCheck();
+  }
+
+  centerOnStop(stop: any) {
+    this.mapService.flyTo(stop.lng, stop.lat, 16);
+    // On mobile, close list to see map
+    if (window.innerWidth < 600) {
+      this.showStopsList = false;
+    }
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {
@@ -453,6 +467,26 @@ export class NavigateComponent implements OnInit, OnDestroy {
     return Math.sqrt(dx * dx + dy * dy) * 111.32;
   }
 
+  private calculateStopsEstimate(routeKm: number): number {
+    if (!this.activeVehicle) return 0;
+    const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
+    const fullAutonomy = (this.activeVehicle.fuelCapacityGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
+    const kmBefore = this.userPreferences?.notifyGasStationKmBefore ?? 20;
+
+    const safeCurrentAutonomy = Math.max(0, currentAutonomy - kmBefore);
+    if (routeKm <= safeCurrentAutonomy) return 0;
+
+    let stops = 0;
+    let accumulatedKm = safeCurrentAutonomy;
+    const safeFullAutonomy = Math.max(10, fullAutonomy - kmBefore);
+
+    while (accumulatedKm < routeKm) {
+      stops++;
+      accumulatedKm += safeFullAutonomy;
+    }
+    return stops;
+  }
+
   async searchDestination(): Promise<void> {
     if (!this.searchQuery.trim() || this.isNavigating) return;
     this.isSearching = true;
@@ -533,12 +567,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
         this.possibleRoutes = data.routes.map((r: any, i: number) => {
           let stops = 0;
           if (this.activeVehicle && this.userPreferences) {
-            const km = r.distance / 1000;
-            const autonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
-            const safeAuto = autonomy - (this.userPreferences.notifyGasStationKmBefore ?? 20);
-            // Number of stops = how many times we'll need to refuel along the way
-            // If km <= safeAuto, 0 stops. If km = 150, safeAuto = 100, 1 stop.
-            stops = km > safeAuto ? Math.floor(km / (safeAuto > 5 ? safeAuto : 50)) : 0;
+            stops = this.calculateStopsEstimate(r.distance / 1000);
           }
 
           return {
@@ -789,10 +818,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
           const popupHtml = `
             <div style="font-family: 'Montserrat', sans-serif; text-align:center; min-width:140px; padding:8px; background: white; border-radius: 12px;">
-               <div style="color: var(--on-primary-container); margin-bottom: 4px;">
+               <div style="background: var(--primary-container); color: var(--on-primary-container); padding: 6px; border-radius: 8px; margin-bottom: 4px;">
                  <strong style="font-size:13px; display:block;">${stationToMark.name}</strong>
                </div>
-               <span style="font-size:11px; color:#666; font-weight: 500;">${stationToMark.display_name}</span>
+               <span style="font-size:11px; color:#666; font-weight: 500;">${stationToMark.brand}</span>
             </div>`;
 
           this.mapService.setSmartStopMarker(
