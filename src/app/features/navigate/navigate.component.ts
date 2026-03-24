@@ -180,37 +180,49 @@ export class NavigateComponent implements OnInit, OnDestroy {
     if (fuelPercent < 15 || currentAutonomy < 20) {
       this.isAutonomyCritical = true;
 
-      // Si no tenemos paradas o si las que hay son de una búsqueda muy vieja (más de 5 min)
-      // O si simplemente no hay paradas, buscamos.
       if (this.cachedSmartStops.length === 0) {
         this.isEvaluatingRules = true;
-        console.log(`[SmartFuel] Autonomía crítica detectada (${fuelPercent.toFixed(1)}%). Buscando estaciones...`);
+        console.log(`[SmartFuel] Autonomía crítica (${fuelPercent.toFixed(1)}%). Buscando lo más cercano...`);
 
         try {
           const favoriteBrands = (this.userPreferences.preferences || [])
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          // Intentar buscar con radio amplio (30km)
-          const allStations = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.3);
+          // 1. Obtener candidatos (favoritos y generales)
+          let allCandidates = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.25); // ~25km radio
 
-          if (allStations && allStations.length > 0) {
-            console.log(`[SmartFuel] Se encontraron ${allStations.length} estaciones proactivas.`);
+          if (allCandidates && allCandidates.length > 0) {
+            // 2. Calcular distancias y ORDENAR ESTRICTAMENTE por cercanía
+            const sortedStations = allCandidates
+              .map(s => {
+                const dist = this.calculateDistance(pos, { lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
+                return { ...s, dist };
+              })
+              .sort((a, b) => a.dist - b.dist); // El más cercano primero
+
+            console.log(`[SmartFuel] Encontradas ${sortedStations.length} estaciones. La más cercana está a ${sortedStations[0].dist.toFixed(2)}km`);
+
             this.mapService.clearStopMarkers();
             this.cachedSmartStops = [];
 
-            for (const station of allStations.slice(0, 3)) {
-              const dist = this.calculateDistance(pos, { lat: parseFloat(station.lat), lng: parseFloat(station.lon) });
-              const isReachable = dist < currentAutonomy;
+            // 3. Mostrar las 3 más cercanas (sin importar si son favoritas o no, la cercanía es prioridad en crítico)
+            for (const station of sortedStations.slice(0, 3)) {
+              const isReachable = station.dist < currentAutonomy;
+              const isFavorite = favoriteBrands.some(brand =>
+                station.name.toLowerCase().includes(brand.toLowerCase()) ||
+                (station.brand && station.brand.toLowerCase().includes(brand.toLowerCase()))
+              );
 
               const stopData = {
                 name: station.name,
-                brand: station.brand || 'Combustible',
+                brand: station.brand || (isFavorite ? 'Tu Preferida' : 'Gasolinera'),
                 lat: parseFloat(station.lat),
                 lng: parseFloat(station.lon),
                 display_name: station.display_name,
-                distance: dist,
-                isReachable: isReachable
+                distance: station.dist,
+                isReachable: isReachable,
+                isFavorite: isFavorite
               };
 
               this.mapService.setSmartStopMarker(
@@ -223,17 +235,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
             }
 
             if (!this.hasShownLowFuelAlert) {
-              const reachableCount = this.cachedSmartStops.filter(s => s.isReachable).length;
-              const msg = reachableCount > 0
-                ? `Combustible bajo (${Math.round(fuelPercent)}%). Gasolineras cercanas marcadas en el mapa.`
-                : `¡ALERTA! Combustible crítico y las estaciones están lejos de tu rango actual.`;
+              const closest = this.cachedSmartStops[0];
+              const msg = closest.isReachable
+                ? `Combustible bajo. La bomba más cercana está a ${closest.distance.toFixed(1)} km.`
+                : `¡ALERTA! La bomba más cercana (${closest.distance.toFixed(1)} km) está fuera de tu alcance actual.`;
 
               this.triggerActiveNotification('Combustible Crítico', msg, 'anomaly_alert');
               this.hasShownLowFuelAlert = true;
               this.showStopsList = true;
             }
-          } else {
-            console.warn('[SmartFuel] No se encontraron estaciones en un radio de 30km.');
           }
         } catch (error) {
           console.error('[SmartFuel] Error en búsqueda proactiva:', error);
@@ -243,7 +253,6 @@ export class NavigateComponent implements OnInit, OnDestroy {
         }
       }
     } else {
-      // Si el combustible subió (tanqueo), resetear alertas y paradas proactivas
       if (this.isAutonomyCritical) {
         this.isAutonomyCritical = false;
         this.hasShownLowFuelAlert = false;
@@ -1109,26 +1118,29 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[], customDelta?: number): Promise<any[]> {
-    let combinedResults: any[] = [];
+    // 1. Siempre buscar estaciones generales primero para capturar lo más cercano posible
+    // Usamos un delta inicial moderado para no perder lo que está al lado
+    const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12);
 
-    // 1. Intentar buscar por cada marca favorita
+    // 2. Buscar marcas favoritas específicamente
+    let brandResults: any[] = [];
     for (const brand of favoriteBrands) {
-      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, customDelta || 0.08);
+      const results = await this.queryNominatim(lat, lng, `${brand}`, customDelta || 0.15);
       if (results && results.length > 0) {
-        combinedResults = [...combinedResults, ...results];
-        if (combinedResults.length >= 5) break; // Límite de 5 para no saturar
+        brandResults = [...brandResults, ...results];
       }
     }
 
-    // 2. Si no hay suficientes resultados de favoritas, buscar generales
-    if (combinedResults.length < 3) {
-      const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12);
-      if (generalResults && generalResults.length > 0) {
-        combinedResults = [...combinedResults, ...generalResults];
+    // 3. Unificar resultados eliminando duplicados por place_id
+    const all = [...generalResults, ...brandResults];
+    const uniqueMap = new Map();
+    all.forEach(item => {
+      if (item.place_id && !uniqueMap.has(item.place_id)) {
+        uniqueMap.set(item.place_id, item);
       }
-    }
+    });
 
-    return combinedResults;
+    return Array.from(uniqueMap.values());
   }
 
   private async queryNominatim(lat: number, lng: number, query: string, delta: number): Promise<any[]> {
