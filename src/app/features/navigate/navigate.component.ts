@@ -134,7 +134,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   // Cache stops so they don't flicker on every GPS update
   // { name: string; brand: string; lat: number; lng: number; alerted: boolean }
-  cachedSmartStops:any[] = [];
+  cachedSmartStops: any[] = [];
 
   // Seguimiento de paradas
   private currentStopIndex = -1;
@@ -177,11 +177,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
         );
         this.notifiedStops.add(stopKey);
         this.currentStopIndex = idx;
+
+        // Guardar nombre de la estación para el registro de tanqueo
+        window.sessionStorage.setItem('smartFuel_currentStation', stop.name);
+
         this.cdr.markForCheck();
       }
 
       // 2. Si pasa la parada sin registrar (se aleja > 500m después de haber estado cerca)
       if (distanceToStop > 0.5 && this.notifiedStops.has(stopKey) && !stop.refilled) {
+        window.sessionStorage.removeItem('smartFuel_currentStation');
         // Buscar la siguiente parada si el combustible sigue siendo crítico
         this.evaluateTripRules();
       }
@@ -219,11 +224,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
   get fuelDashOffset(): number {
     return 125.6 * (1 - this.fuelLevelPercent / 100);
   }
-
   ngOnInit(): void {
     this.loadFavorites();
     this.startWatchingPosition();
     this.loadPreferences();
+
+    window.addEventListener('go-to-stop', (e: any) => {
+      const { lat, lng, name } = e.detail;
+      this.goToStop(lat, lng, name);
+    });
 
     this.mapService.mapClick.subscribe(event => {
       this.onMapClick(event);
@@ -234,6 +243,19 @@ export class NavigateComponent implements OnInit, OnDestroy {
       if (e.detail && e.detail.lng && e.detail.lat) {
         this.onMapClick(e.detail, true);
       }
+    });
+  }
+
+  private goToStop(lat: number, lng: number, name: string): void {
+    const stopPos = { lat, lng };
+    this.mapService.setDestinationMarker(lng, lat);
+
+    // Si ya estamos navegando, calculamos la ruta al stop PERO manteniendo el destino original
+    // para cuando terminemos el tanqueo. Por ahora, simplemente navegamos al stop.
+    this.destinationName = name;
+    this.destination = stopPos;
+    this.calculateRoute(this.userPosition!, stopPos).then(() => {
+      this.executeTripLogic();
     });
   }
 
@@ -865,16 +887,52 @@ export class NavigateComponent implements OnInit, OnDestroy {
   }
 
   private async evaluateTripRules(): Promise<void> {
-    if (!this.destination || !this.routeDistance || !this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) {
+    if (!this.activeVehicle || !this.userPreferences || this.isEvaluatingRules) {
       return;
     }
 
     const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
-    const fullAutonomy = (this.activeVehicle.fuelCapacityGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
-    const routeKm = parseFloat(this.routeDistance);
-
     const safeCurrentAutonomy = currentAutonomy - kmBefore;
+
+    // 1. Detección Proactiva (Sin ruta activa)
+    if (!this.destination && safeCurrentAutonomy < 10 && this.userPosition) {
+      this.isAutonomyCritical = true;
+      if (this.cachedSmartStops.length === 0) {
+        this.triggerActiveNotification(
+          'Combustible Crítico',
+          'Tu combustible es muy bajo. Buscando la gasolinera más cercana según tus preferencias.',
+          'anomaly_alert'
+        );
+        const favoriteBrands = (this.userPreferences.preferences || [])
+          .sort((a, b) => (a.priority || 99) - (b.priority || 99))
+          .map(p => p.brandName);
+
+        const stations = await this.findBestGasStationNear(this.userPosition.lat, this.userPosition.lng, favoriteBrands);
+        if (stations && stations.length > 0) {
+          const station = stations[0];
+          this.mapService.setSmartStopMarker(
+            parseFloat(station.lon),
+            parseFloat(station.lat),
+            'local_gas_station',
+            this.generatePopupHtml(station)
+          );
+          this.cachedSmartStops = [{
+            name: station.name,
+            brand: station.brand || 'Combustible',
+            lat: parseFloat(station.lat),
+            lng: parseFloat(station.lon),
+            display_name: station.display_name
+          }];
+          this.showStopsList = true;
+        }
+      }
+      return;
+    }
+
+    if (!this.destination || !this.routeDistance) return;
+
+    const routeKm = parseFloat(this.routeDistance);
     this.isAutonomyCritical = routeKm > safeCurrentAutonomy;
 
     if (this.cachedSmartStops.length > 0) return;
@@ -884,13 +942,14 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
     try {
       if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
-        // Extraer marcas favoritas del usuario
         const favoriteBrands = (this.userPreferences.preferences || [])
           .sort((a, b) => (a.priority || 99) - (b.priority || 99))
           .map(p => p.brandName);
 
         let stopsCoords: number[][] = [];
         let accumulatedKm = Math.max(5, safeCurrentAutonomy);
+        const fullAutonomy = (this.activeVehicle.fuelCapacityGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
+
         while (accumulatedKm < routeKm) {
           const ratio = accumulatedKm / routeKm;
           const idx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.98));
@@ -908,34 +967,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
           this.hasShownAutonomyAlert = true;
         }
 
-        // Buscar estaciones para cada parada respetando prioridades
         for (const coord of stopsCoords) {
           const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands);
-
           if (stations && stations.length > 0) {
             const stationToMark = stations[0];
-            const popupHtml = `
-              <div class="stop-popup-container">
-                <div class="stop-popup-header">
-                  <div class="stop-popup-icon">
-                    <span class="material-symbols-outlined">local_gas_station</span>
-                  </div>
-                  <div class="stop-popup-title">${stationToMark.name || 'Estación de Servicio'}</div>
-                </div>
-                <div class="stop-popup-address">
-                  <span class="material-symbols-outlined">location_on</span>
-                  <span>${stationToMark.display_name || 'Ubicación encontrada'}</span>
-                </div>
-                <div class="stop-popup-footer">
-                  <span class="stop-popup-tag">Sugerida</span>
-                </div>
-              </div>`;
-
             this.mapService.setSmartStopMarker(
               parseFloat(stationToMark.lon),
               parseFloat(stationToMark.lat),
               'local_gas_station',
-              popupHtml
+              this.generatePopupHtml(stationToMark)
             );
 
             this.cachedSmartStops.push({
@@ -943,6 +983,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
               brand: stationToMark.brand || 'Combustible',
               lat: parseFloat(stationToMark.lat),
               lng: parseFloat(stationToMark.lon),
+              display_name: stationToMark.display_name,
               alerted: false
             });
           }
@@ -952,6 +993,28 @@ export class NavigateComponent implements OnInit, OnDestroy {
       this.isEvaluatingRules = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private generatePopupHtml(station: any): string {
+    return `
+      <div class="stop-popup-container">
+        <div class="stop-popup-header">
+          <div class="stop-popup-icon">
+            <span class="material-symbols-outlined">local_gas_station</span>
+          </div>
+          <div class="stop-popup-title">${station.name || 'Estación de Servicio'}</div>
+        </div>
+        <div class="stop-popup-address">
+          <span class="material-symbols-outlined">location_on</span>
+          <span>${station.display_name || 'Ubicación encontrada'}</span>
+        </div>
+        <div class="stop-popup-footer">
+          <button class="stop-popup-go-btn" onclick="window.dispatchEvent(new CustomEvent('go-to-stop', {detail: {lat: ${station.lat}, lng: ${station.lon}, name: '${station.name}'}}))">
+            Ir Ahora
+          </button>
+          <span class="stop-popup-tag">Sugerida</span>
+        </div>
+      </div>`;
   }
 
   private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[]): Promise<any[]> {
@@ -1003,7 +1066,7 @@ export class NavigateComponent implements OnInit, OnDestroy {
     }
   }
   private monitorSpeed(): void {
-    if(!this.userPreferences?.maxSpeedLimit || !this.isNavigating) return;
+    if (!this.userPreferences?.maxSpeedLimit || !this.isNavigating) return;
     if (this.currentSpeed >= this.userPreferences.maxSpeedLimit) {
       if (!this.showSpeedAlert) {
         this.showSpeedAlert = true;
@@ -1012,46 +1075,46 @@ export class NavigateComponent implements OnInit, OnDestroy {
     } else this.showSpeedAlert = false;
   }
 
-getSpeedStatusClass(): string {
-  if (!this.userPreferences?.maxSpeedLimit) return '';
-  const ratio = this.currentSpeed / this.userPreferences.maxSpeedLimit;
-  if (ratio >= 1) return 'speed-critical';
-  if (ratio >= 0.85) return 'speed-warning';
-  return 'speed-normal';
-}
+  getSpeedStatusClass(): string {
+    if (!this.userPreferences?.maxSpeedLimit) return '';
+    const ratio = this.currentSpeed / this.userPreferences.maxSpeedLimit;
+    if (ratio >= 1) return 'speed-critical';
+    if (ratio >= 0.85) return 'speed-warning';
+    return 'speed-normal';
+  }
 
   private executeTripLogic(): void {
-  this.isNavigating = true;
-  this.hasShownAutonomyAlert = false; // Initial trip check
-  this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
-  this.saveTripState();
-  this.showRouteList = false;
-  this.centerOnUser();
-  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-  this.isArrivalBarCondensed = false;
-  this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
-  this.cdr.markForCheck();
-}
+    this.isNavigating = true;
+    this.hasShownAutonomyAlert = false; // Initial trip check
+    this.updateManeuver({ icon: 'navigation', distance: 'En ruta', street: this.destinationName });
+    this.saveTripState();
+    this.showRouteList = false;
+    this.centerOnUser();
+    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+    this.isArrivalBarCondensed = false;
+    this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
+    this.cdr.markForCheck();
+  }
 
-showFullArrivalBar(): void {
-  this.isArrivalBarCondensed = false;
-  this.cdr.markForCheck();
-  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-  this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
-}
+  showFullArrivalBar(): void {
+    this.isArrivalBarCondensed = false;
+    this.cdr.markForCheck();
+    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+    this.arrivalBarTimeout = setTimeout(() => { this.isArrivalBarCondensed = true; this.cdr.markForCheck(); }, 8000);
+  }
 
-endTrip(): void {
-  this.isNavigating = false;
-  this.isArrivalBarCondensed = false;
-  if(this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
-  if(this.activeVehicle) this.vehicleService.saveActiveTrip(this.activeVehicle.id, null).subscribe();
-  localStorage.removeItem('smartFuel_activeTrip');
-  this.destination = null; this.searchQuery = '';
-  this.destinationName = 'Destino seleccionado';
-  this.hasShownAutonomyAlert = false;
-  this.hasShownLowFuelAlert = false;
-  this.cachedSmartStops = [];
-  this.mapService.clearRouteAndMarkers();
-  this.cdr.markForCheck();
-}
+  endTrip(): void {
+    this.isNavigating = false;
+    this.isArrivalBarCondensed = false;
+    if (this.arrivalBarTimeout) clearTimeout(this.arrivalBarTimeout);
+    if (this.activeVehicle) this.vehicleService.saveActiveTrip(this.activeVehicle.id, null).subscribe();
+    localStorage.removeItem('smartFuel_activeTrip');
+    this.destination = null; this.searchQuery = '';
+    this.destinationName = 'Destino seleccionado';
+    this.hasShownAutonomyAlert = false;
+    this.hasShownLowFuelAlert = false;
+    this.cachedSmartStops = [];
+    this.mapService.clearRouteAndMarkers();
+    this.cdr.markForCheck();
+  }
 }

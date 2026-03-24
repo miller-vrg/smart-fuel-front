@@ -313,7 +313,7 @@ export class FuelRefillComponent {
     this.isSaving.set(true);
     const v = this.selectedVehicle()!;
     
-    // Convert to gallons for backend
+    // Convert to gallons for backend storage (Unified standard)
     const gallonsAdded = this.unit() === 'liters' 
       ? amountInSelectedUnit / this.GAL_TO_L 
       : amountInSelectedUnit;
@@ -322,13 +322,18 @@ export class FuelRefillComponent {
       ? (this.pricePerUnitSig() || 0) * this.GAL_TO_L
       : (this.pricePerUnitSig() || 0);
 
+    // Auto-detect station name if manual and we have location
+    let stationName = 'Registro Manual';
+    if (window.sessionStorage.getItem('smartFuel_currentStation')) {
+      stationName = window.sessionStorage.getItem('smartFuel_currentStation') || stationName;
+    }
+
     const dto = {
       vehicleId: v.id,
-      // Use 4 decimals for high precision storage (matching the new backend scale)
       gallonsAdded: Math.round(gallonsAdded * 10000) / 10000,
       pricePerGallon: Math.round(pricePerGallon * 10000) / 10000,
       odometer: this.odometerSig(),
-      stationName: 'Registro Manual',
+      stationName: stationName,
       notes: `Registro de tanqueo via App (${this.unit()})`
     };
 

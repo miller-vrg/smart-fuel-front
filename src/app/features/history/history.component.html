@@ -8,21 +8,18 @@
   }
 
   <!-- Weekly Bar Chart (Keeping mock since API doesn't have weekly bars specifically) -->
-  <div class="week-chart">
-    <div class="week-chart__bars">
-      @for (bar of weeklyData; track bar) {
-        <div
-          class="week-bar"
-          [class.week-bar--active]="bar.active">
-          <div class="week-bar__fill" [style.height.%]="bar.height"></div>
-          <span class="week-bar__label" [class.week-bar__label--active]="bar.active">{{ bar.day }}</span>
-        </div>
-      }
+  @if (costs$ | async; as costs) {
+    <div class="cost-analytics">
+      <div class="cost-card">
+        <span class="cost-card__label">Costo Semanal</span>
+        <span class="cost-card__value">{{ costs.weekly | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+      <div class="cost-card">
+        <span class="cost-card__label">Costo Mensual</span>
+        <span class="cost-card__value">{{ costs.monthly | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
     </div>
-    <div class="week-chart__footer">
-      <p>Your efficiency is <span class="text-primary fw-600">4% higher</span> than last week.</p>
-    </div>
-  </div>
+  }
 
   @if (summary$ | async; as summary) {
     <!-- Anomaly Alert -->

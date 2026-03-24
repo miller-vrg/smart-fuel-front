@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { combineLatest, Observable, EMPTY } from 'rxjs';
+import { combineLatest, Observable, EMPTY, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 import { FuelService } from '@core/services/fuel.service';
@@ -22,33 +22,38 @@ export class HistoryComponent implements OnInit {
 
   summary$!: Observable<any>;
   logs$!: Observable<any[]>;
-
-  readonly weeklyData = [
-    { day: 'Mon', height: 60 },
-    { day: 'Tue', height: 45 },
-    { day: 'Wed', height: 85 },
-    { day: 'Thu', height: 95, active: true },
-    { day: 'Fri', height: 40 },
-    { day: 'Sat', height: 30 },
-    { day: 'Sun', height: 55 },
-  ];
+  costs$!: Observable<{ weekly: number, monthly: number }>;
 
   ngOnInit() {
-    this.summary$ = combineLatest([
-      this.vehicleService.activeVehicle$,
-      this.vehicleService.dataRefreshed$
-    ]).pipe(
-      switchMap(([v, _]: [any, any]) => v ? this.fuelService.getConsumptionSummary(v.id) : EMPTY)
+    const activeVehicle$ = this.vehicleService.activeVehicle$;
+    const refresh$ = this.vehicleService.dataRefreshed$;
+
+    this.summary$ = combineLatest([activeVehicle$, refresh$]).pipe(
+      switchMap(([v, _]) => v ? this.fuelService.getConsumptionSummary(v.id) : EMPTY)
     );
 
-    this.logs$ = combineLatest([
-      this.vehicleService.activeVehicle$,
-      this.vehicleService.dataRefreshed$
-    ]).pipe(
-      switchMap(([v, _]: [any, any]) => v ? this.fuelService.getHistory(v.id) : EMPTY)
+    this.logs$ = combineLatest([activeVehicle$, refresh$]).pipe(
+      switchMap(([v, _]) => v ? this.fuelService.getHistory(v.id) : EMPTY)
+    );
+
+    this.costs$ = this.logs$.pipe(
+      switchMap(logs => {
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const weekly = logs
+          .filter(log => new Date(log.loggedAt) >= startOfWeek)
+          .reduce((acc, log) => acc + (log.totalCost || 0), 0);
+          
+        const monthly = logs
+          .filter(log => new Date(log.loggedAt) >= startOfMonth)
+          .reduce((acc, log) => acc + (log.totalCost || 0), 0);
+          
+        return of({ weekly, monthly });
+      })
     );
     
-    // Ensure vehicles are loaded if they haven't been
     this.vehicleService.loadInitialVehicle().subscribe();
   }
 }
