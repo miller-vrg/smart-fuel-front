@@ -216,7 +216,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
    */
   setSmartStopMarker(lng: number, lat: number, iconName: string = 'location_on', popupHtml?: string): void {
     if (!this.map) return;
-    
+
     const el = document.createElement('div');
     el.className = 'smart-stop-marker';
     el.innerHTML = `
@@ -224,23 +224,25 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         <span class="material-symbols-outlined">${iconName}</span>
       </div>
     `;
-    
+
     // Evitar que el mapa lance el evento click y cambie la ruta
     el.addEventListener('click', (e) => {
       e.stopPropagation();
     });
 
-    const m = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]);
+    const m = new maplibregl.Marker({
+      element: el,
+      anchor: 'bottom' // Asegurar que la punta de la "card" esté en la coordenada
+    }).setLngLat([lng, lat]);
 
     if (popupHtml) {
-      const popup = new maplibregl.Popup({ offset: 25, closeButton: false, closeOnClick: false }).setHTML(popupHtml);
+      const popup = new maplibregl.Popup({
+        offset: 45,
+        closeButton: false,
+        className: 'smart-stop-popup'
+      }).setHTML(popupHtml);
 
-      el.addEventListener('mouseenter', () => popup.setLngLat([lng, lat]).addTo(this.map!));
-      el.addEventListener('mouseleave', () => popup.remove());
-
-      // Keep click toggle just in case on mobile
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
+      el.addEventListener('click', () => {
         if (popup.isOpen()) popup.remove();
         else popup.setLngLat([lng, lat]).addTo(this.map!);
       });

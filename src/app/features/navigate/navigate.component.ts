@@ -646,6 +646,8 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.searchResults = [];
     this.possibleRoutes = [];
     this.destination = null;
+    this.cachedSmartStops = []; // Limpiar paradas al limpiar búsqueda
+    this.isAutonomyCritical = false;
     this.mapService.clearRouteAndMarkers();
     localStorage.removeItem('smartFuel_activeTrip');
     if (this.activeVehicle) {

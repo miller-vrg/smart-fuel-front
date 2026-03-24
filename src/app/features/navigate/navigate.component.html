@@ -59,11 +59,20 @@
           placeholder="¿A dónde vas?"
           [(ngModel)]="searchQuery"
           (keyup.enter)="searchDestination()"/>
-        @if (searchQuery) {
-          <button class="search-bar__clear" (click)="clearSearch()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        }
+
+        <div class="search-bar__actions">
+          @if (searchQuery) {
+            <button class="search-bar__clear" (click)="clearSearch()">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          }
+          @if (isAutonomyCritical && cachedSmartStops.length > 0) {
+            <button class="search-bar__stops-btn" (click)="openRouteList()" title="Ver paradas sugeridas">
+              <span class="material-symbols-outlined">local_gas_station</span>
+              <span class="stops-count">{{ cachedSmartStops.length }}</span>
+            </button>
+          }
+        </div>
       </div>
 
       <!-- Search Results Dropdown -->
@@ -219,8 +228,8 @@
           <div class="hud-circle hud-circle--fuel">
             <svg viewBox="0 0 48 48" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
               <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(150,150,150,0.2)" stroke-width="4"/>
-              <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor" 
-                      [attr.stroke-dasharray]="125.6" [attr.stroke-dashoffset]="fuelDashOffset" 
+              <circle cx="24" cy="24" r="20" fill="transparent" [attr.stroke]="fuelColor"
+                      [attr.stroke-dasharray]="125.6" [attr.stroke-dashoffset]="fuelDashOffset"
                       stroke-width="4" style="transition:stroke-dashoffset 0.5s ease-in-out, stroke 0.5s;"/>
             </svg>
             <span class="hud-circle__val" [style.color]="fuelColor" style="z-index:1; font-size:1rem;">{{ fuelLevelPercent | number:'1.0-0' }}</span>
