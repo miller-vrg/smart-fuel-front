@@ -54,6 +54,59 @@
   }
 }
 
+/* ── Weekly Bar Chart ────────────────────────────── */
+.week-chart {
+  background: var(--surface-container-low);
+  padding: 24px;
+  border-radius: 24px;
+  margin-bottom: 24px;
+
+  &__bars {
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+
+  &__footer {
+    border-top: 1px solid var(--outline-variant);
+    padding-top: 16px;
+    p { margin: 0; font-size: 0.85rem; color: var(--on-surface-variant); }
+  }
+}
+
+.week-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+
+  &__fill {
+    width: 12px;
+    background: var(--surface-variant);
+    border-radius: 10px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-height: 4px; // Para que se vea algo aunque sea 0
+  }
+
+  &__label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+
+    &--active { color: var(--primary); font-weight: 700; }
+  }
+
+  &--active {
+    .week-bar__fill { background: var(--primary); }
+  }
+}
+
 /* ── Cost Analytics ──────────────────────────────── */
 .cost-analytics {
   display: grid;

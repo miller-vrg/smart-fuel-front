@@ -896,19 +896,23 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const safeCurrentAutonomy = currentAutonomy - kmBefore;
 
     // 1. Detección Proactiva (Sin ruta activa)
-    if (!this.destination && safeCurrentAutonomy < 10 && this.userPosition) {
+    const fuelPercent = (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons!) * 100;
+    const isFuelCritical = safeCurrentAutonomy < 20 || fuelPercent < 15;
+
+    if (!this.destination && isFuelCritical && this.userPosition) {
       this.isAutonomyCritical = true;
       if (this.cachedSmartStops.length === 0) {
         this.triggerActiveNotification(
           'Combustible Crítico',
-          'Tu combustible es muy bajo. Buscando la gasolinera más cercana según tus preferencias.',
+          `Tu nivel de combustible (${Math.round(fuelPercent)}%) es bajo. Buscando gasolineras cercanas.`,
           'anomaly_alert'
         );
         const favoriteBrands = (this.userPreferences.preferences || [])
           .sort((a, b) => (a.priority || 99) - (b.priority || 99))
           .map(p => p.brandName);
 
-        const stations = await this.findBestGasStationNear(this.userPosition.lat, this.userPosition.lng, favoriteBrands);
+        // Aumentamos el radio de búsqueda (delta) a 0.15 (~15km) para la detección proactiva
+        const stations = await this.findBestGasStationNear(this.userPosition.lat, this.userPosition.lng, favoriteBrands, 0.15);
         if (stations && stations.length > 0) {
           const station = stations[0];
           this.mapService.setSmartStopMarker(
@@ -1017,15 +1021,15 @@ export class NavigateComponent implements OnInit, OnDestroy {
       </div>`;
   }
 
-  private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[]): Promise<any[]> {
+  private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[], customDelta?: number): Promise<any[]> {
     // 1. Intentar buscar por cada marca favorita en orden de prioridad
     for (const brand of favoriteBrands) {
-      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, 0.08); // ~8km radio
+      const results = await this.queryNominatim(lat, lng, `${brand} gas station`, customDelta || 0.08); // ~8km radio por defecto
       if (results && results.length > 0) return results;
     }
 
     // 2. Si no hay favoritas o no se encontró ninguna, buscar cualquier gasolinera cercana
-    const generalResults = await this.queryNominatim(lat, lng, 'gas station', 0.12); // ~12km radio para asegurar encontrar algo
+    const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12); // ~12km radio por defecto
     if (generalResults && generalResults.length > 0) return generalResults;
 
     return [];
