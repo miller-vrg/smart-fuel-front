@@ -219,7 +219,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     
     const el = document.createElement('div');
     el.className = 'smart-stop-marker';
-    el.innerHTML = `<span class="material-symbols-outlined">${iconName}</span>`;
+    el.innerHTML = `
+      <div class="stop-marker-circle">
+        <span class="material-symbols-outlined">${iconName}</span>
+      </div>
+    `;
     
     // Evitar que el mapa lance el evento click y cambie la ruta
     el.addEventListener('click', (e) => {

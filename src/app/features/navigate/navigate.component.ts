@@ -18,6 +18,7 @@ import { Vehicle } from '@core/interfaces/vehicle.interface';
 
 import { environment } from '@env/environment';
 import { UserPosition } from './navigate.interfaces';
+import { AppNotification } from '@/app/core/interfaces/notification.interface';
 
 @Component({
   selector: 'app-navigate',
@@ -86,6 +87,9 @@ export class NavigateComponent implements OnInit, OnDestroy {
 
   showAddVehicleModal = false;
   showSpeedAlert = false;
+  showActiveNotification = false;
+  activeNotification: any | null = null;
+  private notificationTimeout: any = null;
   newVehicleForm: Partial<Vehicle> = {
     brand: '',
     model: '',
@@ -266,6 +270,32 @@ export class NavigateComponent implements OnInit, OnDestroy {
     }
   }
 
+  private triggerActiveNotification(title: string, message: string, type: 'anomaly_alert' | 'smart_stop') {
+    const notif: AppNotification = {
+      id: Math.random().toString(36).substring(7),
+      type,
+      timestamp: new Date().toISOString(),
+      title,
+      message,
+      isRead: false
+    };
+
+    // Update global list
+    this.notificationsService.notifications.update(list => [notif, ...list]);
+
+    // Show on screen
+    this.activeNotification = notif;
+    this.showActiveNotification = true;
+
+    if (this.notificationTimeout) clearTimeout(this.notificationTimeout);
+    this.notificationTimeout = setTimeout(() => {
+      this.showActiveNotification = false;
+      this.cdr.markForCheck();
+    }, 6000);
+
+    this.cdr.markForCheck();
+  }
+
   private processNavigationUpdate(currentPos: UserPosition): void {
     if (!this.activeVehicle || !this.destination) return;
 
@@ -305,14 +335,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
       // Low fuel alert (< 15%)
       if (this.fuelLevelPercent < 15 && !this.hasShownLowFuelAlert) {
         this.hasShownLowFuelAlert = true;
-        this.notificationsService.notifications.update(list => [{
-          id: Math.random().toString(36).substring(7),
-          type: 'anomaly_alert',
-          timestamp: new Date().toISOString(),
-          title: 'Combustible Crítico',
-          message: `Nivel de combustible al ${this.fuelLevelPercent.toFixed(0)}%. Busca una estación próxima.`,
-          isRead: false
-        }, ...list]);
+        this.triggerActiveNotification(
+          'Combustible Crítico',
+          `Nivel de combustible al ${this.fuelLevelPercent.toFixed(0)}%. Busca una estación próxima.`,
+          'anomaly_alert'
+        );
       }
     }
 
@@ -687,10 +714,10 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const fullAutonomy = (this.activeVehicle.fuelCapacityGallons! * this.activeVehicle.avgKmPerGallon!) || 300;
     const kmBefore = this.userPreferences.notifyGasStationKmBefore ?? 20;
     const routeKm = parseFloat(this.routeDistance);
-    
+
     // Autonomía "segura" actual
     const safeCurrentAutonomy = currentAutonomy - kmBefore;
-    
+
     // Es crítico si la ruta es más larga que lo que tenemos ahora menos el margen
     this.isAutonomyCritical = routeKm > safeCurrentAutonomy;
 
@@ -703,43 +730,40 @@ export class NavigateComponent implements OnInit, OnDestroy {
     try {
       if (this.isAutonomyCritical && this.detailedRouteCoords.length > 0) {
         const brandPreference = this.userPreferences.preferences?.[0]?.brandName;
-        
+
         // Calcular puntos de parada
         // 1. La primera parada debe ser antes de agotar el combustible actual
         // 2. Las siguientes paradas se calculan asumiendo tanque lleno
         let stopsCoords: number[][] = [];
-        
+
         // Primera parada (distancia actual segura)
         let accumulatedKm = Math.max(5, safeCurrentAutonomy);
-        
+
         while (accumulatedKm < routeKm) {
           const ratio = accumulatedKm / routeKm;
           const idx = Math.floor(this.detailedRouteCoords.length * Math.min(ratio, 0.98));
           stopsCoords.push(this.detailedRouteCoords[idx]);
-          
+
           // Siguiente parada será después de un tanque lleno (menos el margen)
           accumulatedKm += (fullAutonomy - kmBefore);
-          
+
           // Evitar bucles infinitos si la autonomía es muy baja
-          if (fullAutonomy <= kmBefore) break; 
+          if (fullAutonomy <= kmBefore) break;
         }
 
         if (this.isNavigating && !this.hasShownAutonomyAlert && stopsCoords.length > 0) {
-          this.notificationsService.notifications.update(list => [{
-            id: Math.random().toString(36).substring(7),
-            type: 'smart_stop',
-            timestamp: new Date().toISOString(),
-            title: 'Autonomía Insuficiente',
-            message: `Tu combustible actual (~${Math.round(currentAutonomy)}km) no alcanza para la ruta (${Math.round(routeKm)}km). Sugiriendo ${stopsCoords.length} paradas.`,
-            isRead: false
-          }, ...list]);
+          this.triggerActiveNotification(
+            'Autonomía Insuficiente',
+            `Tu combustible actual (~${Math.round(currentAutonomy)}km) no alcanza para la ruta (${Math.round(routeKm)}km). Sugiriendo ${stopsCoords.length} paradas.`,
+            'smart_stop'
+          );
           this.hasShownAutonomyAlert = true;
         }
 
         for (const coord of stopsCoords) {
           // Búsqueda real de estaciones cerca de este punto de la ruta
           const stations = await this.findGasStationsNear(coord[1], coord[0], brandPreference);
-          
+
           let stationToMark;
           if (stations && stations.length > 0) {
             stationToMark = stations[0];
@@ -764,9 +788,9 @@ export class NavigateComponent implements OnInit, OnDestroy {
             </div>`;
 
           this.mapService.setSmartStopMarker(
-            parseFloat(stationToMark.lon), 
-            parseFloat(stationToMark.lat), 
-            'local_gas_station', 
+            parseFloat(stationToMark.lon),
+            parseFloat(stationToMark.lat),
+            'local_gas_station',
             popupHtml
           );
 
@@ -789,13 +813,13 @@ export class NavigateComponent implements OnInit, OnDestroy {
     try {
       // Usar una búsqueda más amplia si hay marca, o genérica si no
       const query = brand ? `${brand} gas station` : 'gas station';
-      
+
       // Nominatim con viewbox pequeño alrededor del punto para simular "cerca"
       const delta = 0.05; // ~5km
       const viewbox = `${lng - delta},${lat + delta},${lng + delta},${lat - delta}`;
-      
+
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&viewbox=${viewbox}&bounded=1`;
-      
+
       const resp = await fetch(url, {
         headers: { 'Accept-Language': 'es' }
       });

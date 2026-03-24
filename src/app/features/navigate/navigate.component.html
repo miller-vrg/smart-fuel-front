@@ -1,5 +1,23 @@
 <div class="nav-page">
 
+  <!-- Active Notification Banner -->
+  @if (showActiveNotification && activeNotification) {
+    <div class="active-notif-banner" [class.active-notif-banner--anomaly]="activeNotification.type === 'anomaly_alert'">
+      <div class="active-notif-banner__icon">
+        <span class="material-symbols-outlined">
+          {{ activeNotification.type === 'smart_stop' ? 'local_gas_station' : 'warning' }}
+        </span>
+      </div>
+      <div class="active-notif-banner__content">
+        <strong class="active-notif-banner__title">{{ activeNotification.title }}</strong>
+        <p class="active-notif-banner__msg">{{ activeNotification.message }}</p>
+      </div>
+      <button class="active-notif-banner__close" (click)="showActiveNotification = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  }
+
   <!-- Floating Action Button for Starting Route (only when NOT navigating) -->
   @if (possibleRoutes.length > 0 && !showRouteList && !isNavigating) {
     <div class="floating-fab-container">
