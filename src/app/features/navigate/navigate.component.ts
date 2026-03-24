@@ -326,8 +326,11 @@ export class NavigateComponent implements OnInit, OnDestroy {
           const distToStop = this.calculateDistance(currentPos, { lat: stop.lat, lng: stop.lng }) * 1000;
           if (distToStop <= 150) {
             stop.alerted = true;
-            // Native browser alert or toast (using native alert for simplicity as requested)
-            setTimeout(() => alert(`📍 Estás llegando a: ${stop.name || stop.brand}`), 0);
+            this.triggerActiveNotification(
+              'Parada Próxima',
+              `Estás llegando a: ${stop.name || stop.brand}. Prepárate para tanquear.`,
+              'smart_stop'
+            );
           }
         }
       });
@@ -455,8 +458,26 @@ export class NavigateComponent implements OnInit, OnDestroy {
     this.isSearching = true;
     this.cdr.markForCheck();
     try {
-      const resp = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(this.searchQuery)}&format=json&limit=5&addressdetails=1`);
-      this.searchResults = await resp.json();
+      let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(this.searchQuery)}&format=json&limit=10&addressdetails=1`;
+
+      // Bias results towards user location if available
+      if (this.userPosition) {
+        url += `&lat=${this.userPosition.lat}&lon=${this.userPosition.lng}`;
+      }
+
+      const resp = await fetch(url);
+      let results = await resp.json();
+
+      // Sort results by distance if user location is known
+      if (this.userPosition && results.length > 0) {
+        results = results.sort((a: any, b: any) => {
+          const distA = this.calculateDistance(this.userPosition!, { lat: parseFloat(a.lat), lng: parseFloat(a.lon) });
+          const distB = this.calculateDistance(this.userPosition!, { lat: parseFloat(b.lat), lng: parseFloat(b.lon) });
+          return distA - distB;
+        });
+      }
+
+      this.searchResults = results.slice(0, 5); // Keep top 5 nearest
     } catch (e) {
       console.error('Error in search', e);
     } finally {
@@ -778,13 +799,17 @@ export class NavigateComponent implements OnInit, OnDestroy {
           }
 
           const popupHtml = `
-            <div style="font-family:sans-serif; text-align:center; min-width:120px; padding:4px;">
-               <strong style="color:var(--primary); font-size:14px; display:block; margin-bottom:2px;">${stationToMark.name}</strong>
-               <span style="font-size:11px; color:#666;">${stationToMark.brand}</span><br>
-               <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${stationToMark.lon}, lat: ${stationToMark.lat}}}))"
-                       style="margin-top:10px; padding:6px 12px; background:#006C53; color:white; border:none; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; width:100%;">
-                  Agregar Parada
-               </button>
+            <div style="font-family: 'Montserrat', sans-serif; text-align:center; min-width:160px; padding:12px; background: white; border-radius: 16px;">
+               <div style="background: var(--primary-container); color: var(--on-primary-container); padding: 8px; border-radius: 12px; margin-bottom: 8px;">
+                 <strong style="font-size:14px; display:block;">${stationToMark.name}</strong>
+               </div>
+               <span style="font-size:12px; color:#666; font-weight: 500;">${stationToMark.brand}</span><br>
+               <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;">
+                 <button onclick="window.dispatchEvent(new CustomEvent('map:setWay', {detail: {lng: ${stationToMark.lon}, lat: ${stationToMark.lat}}}))"
+                         style="padding:10px 16px; background:#006C53; color:white; border:none; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%; box-shadow: 0 4px 8px rgba(0,108,83,0.3);">
+                    ⛽ Agregar Parada
+                 </button>
+               </div>
             </div>`;
 
           this.mapService.setSmartStopMarker(

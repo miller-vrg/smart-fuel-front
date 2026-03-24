@@ -76,25 +76,36 @@
     z-index: 10;
 
     &:hover {
-      transform: scale(1.15);
+      transform: scale(1.1);
       z-index: 11;
     }
 
     .stop-marker-circle {
-      width: 44px;
-      height: 44px;
-      background: var(--primary);
-      color: white;
-      border-radius: 50%;
+      width: 54px;
+      height: 54px;
+      background: var(--surface-container-high);
+      color: var(--primary);
+      border-radius: 16px; /* Estilo similar a los mini-stats */
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border: 2px solid var(--outline-variant);
+      padding: 4px;
 
       .material-symbols-outlined {
-        font-size: 24px;
+        font-size: 20px;
         font-variation-settings: 'FILL' 1;
+        margin-bottom: 2px;
+      }
+
+      &::after {
+        content: '⛽';
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--on-surface-variant);
       }
     }
   }
@@ -149,7 +160,7 @@
 /* ── Active Notification Banner ───────────────────── */
 .active-notif-banner {
   position: absolute;
-  top: 16px;
+  top: 80px; /* Bajarlo un poco para que no quede tapado */
   left: 16px;
   right: 16px;
   background: var(--primary-container);
