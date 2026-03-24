@@ -176,20 +176,25 @@ export class NavigateComponent implements OnInit, OnDestroy {
     const currentAutonomy = (this.activeVehicle.currentFuelGallons! * this.activeVehicle.avgKmPerGallon!) || 0;
     const fuelPercent = (this.activeVehicle.currentFuelGallons! / this.activeVehicle.fuelCapacityGallons!) * 100;
 
+    // Umbral: < 15% o < 20km de autonomía
     if (fuelPercent < 15 || currentAutonomy < 20) {
       this.isAutonomyCritical = true;
 
       if (this.cachedSmartStops.length === 0) {
         this.isEvaluatingRules = true;
+
         try {
           const favoriteBrands = (this.userPreferences.preferences || [])
             .sort((a, b) => (a.priority || 99) - (b.priority || 99))
             .map(p => p.brandName);
 
-          const allCandidates = await this.findBestGasStationNear(pos.lat, pos.lng, favoriteBrands, 0.3);
+          // Iniciamos el radio basado en la autonomía actual (1° ≈ 111km)
+          // Si la autonomía es 10km, el delta inicial es ~0.09
+          const initialDelta = Math.max(0.05, currentAutonomy / 111);
+
+          let allCandidates = await this.findBestGasStationNearAdaptive(pos.lat, pos.lng, favoriteBrands, initialDelta);
 
           if (allCandidates && allCandidates.length > 0) {
-            // 1. Clasificar y ordenar candidatos
             const processed = allCandidates.map(s => {
               const dist = this.calculateDistance(pos, { lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
               const isFavorite = favoriteBrands.some(brand =>
@@ -205,20 +210,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
             let finalSelection: any[] = [];
             const nearestFav = favorites[0];
 
-            // 2. Lógica de Selección Inteligente
-            // Si la favorita más cercana es alcanzable con margen (80% de autonomía), la priorizamos
+            // Si la favorita más cercana está dentro del 80% de la autonomía, la priorizamos
             if (nearestFav && nearestFav.dist < (currentAutonomy * 0.8)) {
               finalSelection = favorites.slice(0, 3);
-              // Si no hay 3 favoritas, rellenamos con la genérica más cercana
               if (finalSelection.length < 3 && generics.length > 0) {
                 finalSelection.push(generics[0]);
               }
             } else {
-              // Si no hay favoritas o están muy lejos/inalcanzables, la absoluta más cercana es de EMERGENCIA
               if (processed.length > 0) {
                 const absoluteNearest = processed[0];
                 finalSelection.push({ ...absoluteNearest, isEmergency: !absoluteNearest.isFavorite });
-                // Añadimos las favoritas de todas formas para que el usuario decida
                 const otherFavs = favorites.filter(f => f.place_id !== absoluteNearest.place_id).slice(0, 2);
                 finalSelection = [...finalSelection, ...otherFavs];
               }
@@ -240,23 +241,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
                 isEmergency: station.isEmergency || false
               };
 
-              this.mapService.setSmartStopMarker(
-                stopData.lng,
-                stopData.lat,
-                'local_gas_station',
-                this.generatePopupHtml(stopData)
-              );
+              this.mapService.setSmartStopMarker(stopData.lng, stopData.lat, 'local_gas_station', this.generatePopupHtml(stopData));
               this.cachedSmartStops.push(stopData);
             }
 
             if (!this.hasShownLowFuelAlert) {
               const closest = this.cachedSmartStops[0];
               let msg = `Combustible bajo (${Math.round(fuelPercent)}%). `;
-              if (closest.isEmergency) {
-                msg += `Tu preferida está lejos. Sugiriendo parada de emergencia a ${closest.distance.toFixed(1)} km.`;
-              } else {
-                msg += `Bomba preferida a ${closest.distance.toFixed(1)} km.`;
-              }
+              msg += closest.isEmergency
+                ? `Buscando opción de emergencia a ${closest.distance.toFixed(1)}km.`
+                : `Bomba preferida a ${closest.distance.toFixed(1)}km.`;
 
               this.triggerActiveNotification('Combustible Crítico', msg, 'anomaly_alert');
               this.hasShownLowFuelAlert = true;
@@ -276,6 +270,40 @@ export class NavigateComponent implements OnInit, OnDestroy {
         this.mapService.clearStopMarkers();
       }
     }
+  }
+
+  private async findBestGasStationNearAdaptive(lat: number, lng: number, favoriteBrands: string[], delta: number, attempts = 0): Promise<any[]> {
+    // Límite de intentos para evitar bucles infinitos (máximo 3 expansiones = radio original * 8)
+    if (attempts > 3) return [];
+
+    console.log(`[SmartFuel] Intento ${attempts + 1}: Buscando en radio de ${(delta * 111).toFixed(1)}km (Delta: ${delta.toFixed(3)})`);
+
+    const searchQueries = [
+      this.queryNominatim(lat, lng, 'gas station', delta),
+      this.queryNominatim(lat, lng, 'fuel', delta),
+      this.queryNominatim(lat, lng, 'gasolinera', delta)
+    ];
+
+    favoriteBrands.forEach(brand => {
+      searchQueries.push(this.queryNominatim(lat, lng, brand, delta));
+    });
+
+    const resultsArray = await Promise.all(searchQueries);
+
+    const uniqueMap = new Map();
+    resultsArray.flat().forEach(item => {
+      const key = item.place_id || `${item.lat}-${item.lon}`;
+      if (!uniqueMap.has(key)) uniqueMap.set(key, item);
+    });
+
+    const results = Array.from(uniqueMap.values());
+
+    // Si no hay resultados, duplicamos el radio y reintentamos
+    if (results.length === 0) {
+      return await this.findBestGasStationNearAdaptive(lat, lng, favoriteBrands, delta * 2, attempts + 1);
+    }
+
+    return results;
   }
 
   private checkStopProximity(pos: UserPosition): void {
@@ -1064,30 +1092,30 @@ export class NavigateComponent implements OnInit, OnDestroy {
         }
 
         for (const coord of stopsCoords) {
-          // RADIO MUY ESTRICTO EN RUTA (3km) para evitar desvíos grandes
-          const stations = await this.findBestGasStationNear(coord[1], coord[0], favoriteBrands, 0.03);
+          // En ruta usamos un radio pequeño (3km) para no desviarnos
+          const stations = await this.findBestGasStationNearAdaptive(coord[1], coord[0], favoriteBrands, 0.03);
           if (stations && stations.length > 0) {
-            const stationToMark = stations[0];
-            const dist = this.userPosition ? this.calculateDistance(this.userPosition, { lat: parseFloat(stationToMark.lat), lng: parseFloat(stationToMark.lon) }) : 0;
+            const sorted = stations.map(s => {
+              const dist = this.userPosition ? this.calculateDistance(this.userPosition, { lat: parseFloat(s.lat), lng: parseFloat(s.lon) }) : 0;
+              const isFavorite = favoriteBrands.some(brand => s.name.toLowerCase().includes(brand.toLowerCase()));
+              return { ...s, dist, isFavorite };
+            }).sort((a, b) => a.dist - b.dist);
+
+            const stationToMark = sorted[0];
 
             const stopData = {
               name: stationToMark.name,
-              brand: stationToMark.brand || 'Combustible',
+              brand: stationToMark.brand || (stationToMark.isFavorite ? 'Tu Preferida' : 'Combustible'),
               lat: parseFloat(stationToMark.lat),
               lng: parseFloat(stationToMark.lon),
               display_name: stationToMark.display_name,
-              distance: dist,
-              isReachable: dist < currentAutonomy,
+              distance: stationToMark.dist,
+              isReachable: stationToMark.dist < currentAutonomy,
+              isFavorite: stationToMark.isFavorite,
               alerted: false
             };
 
-            this.mapService.setSmartStopMarker(
-              stopData.lng,
-              stopData.lat,
-              'local_gas_station',
-              this.generatePopupHtml(stopData)
-            );
-
+            this.mapService.setSmartStopMarker(stopData.lng, stopData.lat, 'local_gas_station', this.generatePopupHtml(stopData));
             this.cachedSmartStops.push(stopData);
           }
         }
@@ -1147,41 +1175,16 @@ export class NavigateComponent implements OnInit, OnDestroy {
       </div>`;
   }
 
-  private async findBestGasStationNear(lat: number, lng: number, favoriteBrands: string[], customDelta?: number): Promise<any[]> {
-    // 1. Siempre buscar estaciones generales primero para capturar lo más cercano posible
-    // Usamos un delta inicial moderado para no perder lo que está al lado
-    const generalResults = await this.queryNominatim(lat, lng, 'gas station', customDelta || 0.12);
-
-    // 2. Buscar marcas favoritas específicamente
-    let brandResults: any[] = [];
-    for (const brand of favoriteBrands) {
-      const results = await this.queryNominatim(lat, lng, `${brand}`, customDelta || 0.15);
-      if (results && results.length > 0) {
-        brandResults = [...brandResults, ...results];
-      }
-    }
-
-    // 3. Unificar resultados eliminando duplicados por place_id
-    const all = [...generalResults, ...brandResults];
-    const uniqueMap = new Map();
-    all.forEach(item => {
-      if (item.place_id && !uniqueMap.has(item.place_id)) {
-        uniqueMap.set(item.place_id, item);
-      }
-    });
-
-    return Array.from(uniqueMap.values());
-  }
-
   private async queryNominatim(lat: number, lng: number, query: string, delta: number): Promise<any[]> {
     try {
       const viewbox = `${lng - delta},${lat + delta},${lng + delta},${lat - delta}`;
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&viewbox=${viewbox}&bounded=1`;
+      // Aumentamos limit a 15 para tener una lista real de candidatos cercanos
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=15&viewbox=${viewbox}&bounded=1`;
 
       const resp = await fetch(url, { headers: { 'Accept-Language': 'es' } });
       return await resp.json();
-    } catch (e) {
-      console.error('Error en Nominatim:', e);
+    } catch (error) {
+      console.error('[SmartFuel] Error en Nominatim:', error);
       return [];
     }
   }
