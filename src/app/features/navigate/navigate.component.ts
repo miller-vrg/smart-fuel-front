@@ -20,11 +20,12 @@ import { Vehicle } from '@core/interfaces/vehicle.interface';
 import { environment } from '@env/environment';
 import { UserPosition } from './navigate.interfaces';
 import { AppNotification } from '@/app/core/interfaces/notification.interface';
+import { FuelRefillComponent } from '../fuel/fuel-refill.component';
 
 @Component({
   selector: 'app-navigate',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FuelRefillComponent],
   templateUrl: './navigate.component.html',
   styleUrl: './navigate.component.scss',
   host: {

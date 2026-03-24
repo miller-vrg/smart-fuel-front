@@ -815,6 +815,45 @@
     justify-content: center;
     &:hover { background: var(--primary-container); }
   }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--on-surface);
+    outline: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &::placeholder {
+      color: var(--on-surface-variant);
+    }
+  }
+
+  &__clear {
+    background: none;
+    border: none;
+    color: var(--on-surface-variant);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--surface-container-highest);
+    }
+
+    span {
+      font-size: 1.25rem;
+    }
+  }
 }
 
 .favorites-dropdown {
@@ -873,46 +912,6 @@
     padding: 6px;
     border-radius: 50%;
     &:hover { color: var(--error); background: var(--error-container); }
-  }
-}
-
-  &__input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: transparent;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    color: var(--on-surface);
-    outline: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    &::placeholder {
-      color: var(--on-surface-variant);
-    }
-  }
-
-  &__clear {
-    background: none;
-    border: none;
-    color: var(--on-surface-variant);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 50%;
-    transition: background 0.2s;
-
-    &:hover {
-      background: var(--surface-container-highest);
-    }
-
-    span {
-      font-size: 1.25rem;
-    }
   }
 }
 
